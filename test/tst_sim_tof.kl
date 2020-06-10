@@ -1,0 +1,54 @@
+PROGRAM tst_sim_tof
+%NOLOCKGROUP
+%UNINITVARS
+
+CONST
+  SIM_NAME = 'FR:\tof_rand.csv'
+
+VAR 
+  fl : FILE
+  val : ARRAY[1] OF REAL
+  uninit_r : ARRAY[1] OF REAL
+  status : INTEGER
+  head : STRING[6]
+  feed_delay FROM test_tof : INTEGER
+
+%include errors.klt
+--port types
+%include kliotyps.kl
+
+--sensor definition
+%include sensor_calib_test_settings.klt
+
+%include errors.klh
+%include csv.klh
+
+BEGIN
+  --make simulated
+  SET_PORT_SIM(io_anin, SENSOR_PIN, 0, status)
+
+  --open csv file
+  csv__read_open(SIM_NAME, fl)
+  --read header
+  head = csv__read_line(SIM_NAME, fl)
+  
+  val[1] = 0
+  REPEAT
+    --read next simulated value
+    csv__read_rarr(SIM_NAME, fl, ',', val, uninit_r)
+    IF UNINIT(val[1]) THEN GOTO break ; ENDIF
+    --set value
+    SET_PORT_VAL(io_anin, SENSOR_PIN, TRUNC(val[1]), status)
+    DELAY feed_delay
+  UNTIL(UNINIT(val[1]))
+
+  break::
+
+  csv__read_close(fl)
+
+  --unsimulate
+  CLR_PORT_SIM(io_anin, SENSOR_PIN, status)
+
+  WRITE TPDISPLAY('AI sim finished!',CR)
+
+END tst_sim_tof

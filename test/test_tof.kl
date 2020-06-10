@@ -1,0 +1,70 @@
+PROGRAM test_tof
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%UNINITVARS
+
+CONST
+  SIM_TIME = 50
+  NUMOFSAMPLES = 4
+
+VAR
+  last_range FROM tof1 : REAL
+  status : INTEGER
+  tof_task : BOOLEAN
+  sim_task : BOOLEAN
+  feed_delay : INTEGER
+  range_time : INTEGER
+
+%include display.c.klt
+--sensor definition
+%include sensor_calib_test_settings.klt
+-- sensor object
+%class tof1('tof_sensor.klc','tof_sensor.klh','tof_sensor_type.klt')
+
+%include display.klh
+%include multitask.klh
+%include strings.klh
+
+BEGIN
+  --clear display
+  display__clear
+  --show display
+  display__show
+  display__set_severity(INFO)
+
+  --set sample time the same as feed delay
+  feed_delay = SIM_TIME
+
+  --create tof object
+  tof1__constructor(SENSOR_PIN, SENS_SLOPE, SENS_INTER)
+  --set custom sample time
+  tof1__set_sample_time(feed_delay)
+  --set to average ranging mode
+  tof1__set_measurement_type(1)
+
+  --total ranging task takes MAX_SAMPLES*feed_delay ms
+  --to complete
+  range_time = SIM_TIME*NUMOFSAMPLES
+
+  --start ranging task
+  tof_task = task__thread('tof1')
+
+  --start simulating AI port
+  sim_task = task__thread('tst_sim_tof')
+
+  REPEAT
+    display__set_message(r_to_s(last_range))
+    display__print
+    DELAY range_time
+  UNTIL(task__is_task_done('tst_sim_tof'))
+
+  --abort ranging
+  tof_task = task__abort('tof1')
+  tof1__destructor
+
+  --abort sim task
+  sim_task = task__abort('tst_sim_tof')
+
+  WRITE TPDISPLAY('main task finished!',CR)
+  
+END test_tof

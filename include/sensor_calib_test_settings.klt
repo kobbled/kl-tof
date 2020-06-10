@@ -1,0 +1,12 @@
+%ifndef tof_test_set_t
+%define tof_test_set_t
+
+CONST
+  --definition of sensor to pass to class
+  -- analog input number
+  SENSOR_PIN = 1
+  --regression parameters
+  SENS_SLOPE = 0.1
+  SENS_INTER = 0
+
+%endif -- tof_test_set_t

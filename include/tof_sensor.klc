@@ -1,0 +1,125 @@
+PROGRAM class_name
+%NOBUSYLAMP
+%COMMENT = 'Distance Sensor'
+%NOLOCKGROUP
+%UNINITVARS
+
+%include namespace.m
+
+%include errors.klt
+%include tof_sensor.klt
+
+%include errors.klh
+%include math.klh
+%include tof_sensor.klh
+
+--define local classes
+-- ********************
+%defeval constructor classfunc(cntr)
+%defeval desctructor classfunc(dsct)
+%defeval set_measurement_type classfunc(mestp)
+%defeval set_sample_time classfunc(stsmp)
+%defeval read_measurement classfunc(rmeas)
+%defeval read_range classfunc(rdrng)
+-- ********************
+
+--private
+--routine to convert analog signal to real value
+ROUTINE calib_ : REAL
+  BEGIN
+    RETURN(this.m * AIN[this.pin] + this.b)
+  END calib_
+
+--initialization
+ROUTINE constructor
+  VAR
+    uninit_r : ARRAY[MAX_SAMPLES] OF REAL 
+  BEGIN
+    --set pin
+    this.pin = io_num
+    --set linear interpolation
+    this.m = slope
+    this.b = intercpt
+    --set sampling time
+    this.sample_time = SAMPLE_MS
+    --set ranging index
+    this.last_index = 1
+    --uninitialize measurement array
+    this.measuremnts = uninit_r
+    -- ranging type
+    this.meas_type = 1 -- default to single measurement
+  END constructor
+
+ROUTINE desctructor
+  VAR
+    uninit_r : ARRAY[MAX_SAMPLES] OF REAL 
+  BEGIN
+    --uninitialize measurement array
+    this.measuremnts = uninit_r
+    --clear pin number
+    this.pin = 0
+  END desctructor
+
+--set sample time
+ROUTINE set_sample_time
+  BEGIN
+    this.sample_time = smpl_tme
+  END set_sample_time
+
+ROUTINE set_measurement_type
+  BEGIN
+    SELECT meas_type OF
+      CASE(1):
+        this.meas_type = 1 -- single measurement
+      CASE(2):
+        this.meas_type = 2 -- averaged measurements
+      ELSE:
+        karelError(INVALID_TYPE_CODE, 'measurement type for sensor not properly set.', ER_ABORT)
+    ENDSELECT
+  END set_measurement_type
+
+--ranging
+ROUTINE read_measurement
+  BEGIN
+    RETURN(calib_)
+  END read_measurement
+
+ROUTINE read_range
+  VAR
+    time_out : BOOLEAN
+    laser_value :	REAL
+    i : INTEGER
+  BEGIN
+    --ranging measurement is a rolling
+    --list of values updated every 
+    --MAX_SAMPLES*SAMPLE_TIME ms
+    IF this.last_index > MAX_SAMPLES THEN
+      this.last_index = 1
+    ENDIF
+
+    --get measurement
+    this.measuremnts[this.last_index] = calib_
+
+    this.last_index = this.last_index + 1
+
+    --average to get mean reading
+    --averaging ignores uninitalized values
+    laser_value = math__average_real(this.measuremnts)
+
+    RETURN(laser_value)
+  END read_range
+
+--task
+BEGIN
+  WHILE(TRUE) DO
+    IF (this.meas_type = 1) THEN
+      last_range = read_measurement
+    ENDIF
+    IF (this.meas_type = 2) THEN
+      last_range = read_range
+    ENDIF
+
+    DELAY this.sample_time
+  ENDWHILE
+END class_name
+

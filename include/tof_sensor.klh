@@ -1,0 +1,30 @@
+--header
+%include header_guard.m
+--oop
+%include namespace.m
+
+--start header file
+header_if -- ifndef class
+header_def -- define class
+
+
+-- namespaced members in format <prog_name_alias>__<func_name>
+declare(class_name,constructor,class_name,cntr)
+declare(class_name,destructor,class_name,dsct)
+--setters
+declare(class_name,set_measurement_type,class_name,mestp)
+declare(class_name,set_sample_time,class_name,stsmp)
+--getters
+declare(class_name,read_measurement,class_name,rmeas)
+declare(class_name,read_range,class_name,rdrng)
+
+ROUTINE classfunc(cntr) (io_num : INTEGER; slope, intercpt : REAL) FROM class_name
+ROUTINE classfunc(dsct) FROM class_name
+--setters
+ROUTINE classfunc(mestp) (meas_type : INTEGER) FROM class_name
+ROUTINE classfunc(stsmp) (smpl_tme : INTEGER) FROM class_name
+--getters
+ROUTINE classfunc(rmeas) : REAL FROM class_name
+ROUTINE classfunc(rdrng) : REAL FROM class_name
+
+%endif --end TOF Sensor header

@@ -1,0 +1,26 @@
+%include define_type.m
+
+--sampling is a rolling window updated
+--every MAX_SAMPLES*SAMPLE_TIME ms
+--number of ranging samples to hold
+%define  MAX_SAMPLES 4
+-- sampling time of each measurement
+%define SAMPLE_MS 10
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define tof_type_define `TYPE
+  TOF_T FROM class_name = STRUCTURE
+    pin  : INTEGER
+    m : REAL
+    b : REAL
+    sample_time : INTEGER
+    meas_type : INTEGER -- 1 = single measure, 2 = average measure
+    last_index : INTEGER
+    measuremnts : ARRAY[MAX_SAMPLES] OF REAL --measurements in mm
+                              --as anolog values loop back to 4096
+                              --so averaging the analog would give 
+                              --wrong result
+    time_out : BOOLEAN
+  ENDSTRUCTURE`
+%mode pop
