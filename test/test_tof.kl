@@ -40,7 +40,7 @@ BEGIN
   --set custom sample time
   tof1__set_sample_time(feed_delay)
   --set to average ranging mode
-  tof1__set_measurement_type(1)
+  tof1__set_measurement_type(2)
 
   --total ranging task takes MAX_SAMPLES*feed_delay ms
   --to complete
