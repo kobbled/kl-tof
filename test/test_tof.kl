@@ -30,7 +30,6 @@ BEGIN
   display__clear
   --show display
   display__show
-  display__set_severity(INFO)
 
   --set sample time the same as feed delay
   feed_delay = SIM_TIME
@@ -53,8 +52,7 @@ BEGIN
   sim_task = task__thread('tst_sim_tof')
 
   REPEAT
-    display__set_message(r_to_s(last_range))
-    display__print
+    display__print(r_to_s(last_range))
     DELAY range_time
   UNTIL(task__is_task_done('tst_sim_tof'))
 
