@@ -11,11 +11,11 @@
 %mode string QQQ "`" "`" "\\"
 %define tof_type_define `TYPE
   TOF_T FROM class_name = STRUCTURE
-    pin  : INTEGER
+    pin  : BYTE
     m : REAL
     b : REAL
-    sample_time : INTEGER
-    meas_type : INTEGER -- 1 = single measure, 2 = average measure
+    sample_time : SHORT
+    meas_type : BYTE -- 1 = single measure, 2 = average measure
     last_index : INTEGER
     measuremnts : ARRAY[MAX_SAMPLES] OF REAL --measurements in mm
                               --as anolog values loop back to 4096
