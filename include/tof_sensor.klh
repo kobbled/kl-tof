@@ -7,24 +7,19 @@
 header_if -- ifndef class
 header_def -- define class
 
-
--- namespaced members in format <prog_name_alias>__<func_name>
-declare(class_name,constructor,class_name,cntr)
-declare(class_name,destructor,class_name,dsct)
+declare_member(class_name,constructor,class_name,cntr)
+ROUTINE constructor (io_num, ai_mode, max_ai : INTEGER; slope, intercpt : REAL) FROM class_name
+declare_member(class_name,destructor,class_name,dsct)
+ROUTINE destructor FROM class_name
 --setters
-declare(class_name,set_measurement_type,class_name,mestp)
-declare(class_name,set_sample_time,class_name,stsmp)
+declare_member(class_name,set_measurement_type,class_name,mestp)
+ROUTINE set_measurement_type (meas_type : INTEGER) FROM class_name
+declare_member(class_name,set_sample_time,class_name,stsmp)
+ROUTINE set_sample_time (smpl_tme : INTEGER) FROM class_name
 --getters
-declare(class_name,read_measurement,class_name,rmeas)
-declare(class_name,read_range,class_name,rdrng)
-
-ROUTINE classfunc(cntr) (io_num : INTEGER; slope, intercpt : REAL) FROM class_name
-ROUTINE classfunc(dsct) FROM class_name
---setters
-ROUTINE classfunc(mestp) (meas_type : INTEGER) FROM class_name
-ROUTINE classfunc(stsmp) (smpl_tme : INTEGER) FROM class_name
---getters
-ROUTINE classfunc(rmeas) : REAL FROM class_name
-ROUTINE classfunc(rdrng) : REAL FROM class_name
+declare_member(class_name,read_measurement,class_name,rmeas)
+ROUTINE read_measurement : REAL FROM class_name
+declare_member(class_name,read_range,class_name,rdrng)
+ROUTINE read_range : REAL FROM class_name
 
 %endif --end TOF Sensor header

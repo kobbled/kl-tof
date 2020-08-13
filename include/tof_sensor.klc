@@ -13,16 +13,6 @@ PROGRAM class_name
 %include math.klh
 %include tof_sensor.klh
 
---define local classes
--- ********************
-%defeval constructor classfunc(cntr)
-%defeval desctructor classfunc(dsct)
-%defeval set_measurement_type classfunc(mestp)
-%defeval set_sample_time classfunc(stsmp)
-%defeval read_measurement classfunc(rmeas)
-%defeval read_range classfunc(rdrng)
--- ********************
-
 --private
 --routine to convert analog signal to real value
 ROUTINE calib_ : REAL
