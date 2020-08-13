@@ -57,7 +57,7 @@ ROUTINE constructor
     this.meas_type = 1 -- default to single measurement
   END constructor
 
-ROUTINE desctructor
+ROUTINE destructor
   VAR
     uninit_r : ARRAY[MAX_SAMPLES] OF REAL 
   BEGIN
@@ -65,7 +65,7 @@ ROUTINE desctructor
     this.measuremnts = uninit_r
     --clear pin number
     this.pin = 0
-  END desctructor
+  END destructor
 
 --set sample time
 ROUTINE set_sample_time
