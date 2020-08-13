@@ -27,7 +27,21 @@ PROGRAM class_name
 --routine to convert analog signal to real value
 ROUTINE calib_ : REAL
   BEGIN
-    RETURN(this.m * AIN[this.pin] + this.b)
+    SELECT this.mode OF
+      CASE(MODE_4_20MA):
+        karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
+      CASE(MODE_0_5V):
+        RETURN(this.m * AIN[this.pin] + this.b)
+      CASE(MODE_5_5V):
+        IF AIN[this.pin] > this.max*this.m THEN
+          RETURN(this.m * AIN[this.pin] + this.b)
+        ELSE
+          RETURN(this.m * AIN[this.pin])
+        ENDIF
+      ELSE:
+        karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
+    ENDSELECT
+
   END calib_
 
 --initialization
@@ -37,9 +51,12 @@ ROUTINE constructor
   BEGIN
     --set pin
     this.pin = io_num
+    --set analog mode
+    this.mode = ai_mode 
     --set linear interpolation
     this.m = slope
     this.b = intercpt
+    this.max = max_ai
     --set sampling time
     this.sample_time = SAMPLE_MS
     --set ranging index

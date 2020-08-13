@@ -1,6 +1,8 @@
 -- USER STRUCT
 tof_type_define
 
+%include tof_sensor.c.klt
+
 VAR
   this : TOF_T
   last_range IN DRAM : REAL

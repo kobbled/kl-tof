@@ -1,0 +1,10 @@
+%ifndef TOF_SENS_CONSTS
+%define TOF_SENS_CONSTS
+
+CONST
+  --analog modes
+  MODE_4_20MA = 1 -- 4 ma -> 20 ma 
+  MODE_0_5V = 2  -- 0 V -> 5V
+  MODE_5_5V = 3  -- -5 V -> 5V
+
+%endif -- TOF_SENS_CONSTS

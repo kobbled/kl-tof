@@ -35,7 +35,7 @@ BEGIN
   feed_delay = SIM_TIME
 
   --create tof object
-  tof1__constructor(SENSOR_PIN, SENS_SLOPE, SENS_INTER)
+  tof1__constructor(SENSOR_PIN, SENS_MODE, SENS_MAX, SENS_SLOPE, SENS_INTER)
   --set custom sample time
   tof1__set_sample_time(feed_delay)
   --set to average ranging mode

@@ -1,12 +1,17 @@
 %ifndef tof_test_set_t
 %define tof_test_set_t
 
+%include tof_sensor.c.klt
+
 CONST
   --definition of sensor to pass to class
   -- analog input number
   SENSOR_PIN = 1
+  -- analog mode
+  SENS_MODE = MODE_0_5V
   --regression parameters
   SENS_SLOPE = 0.1
   SENS_INTER = 0
+  SENS_MAX = 0 -- not needed for 0-5V
 
 %endif -- tof_test_set_t
