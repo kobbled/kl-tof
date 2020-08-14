@@ -23,7 +23,7 @@ ROUTINE calib_ : REAL
       CASE(MODE_0_5V):
         RETURN(this.m * AIN[this.pin] + this.b)
       CASE(MODE_5_5V):
-        IF AIN[this.pin] > this.max*this.m THEN
+        IF AIN[this.pin] > this.max THEN
           RETURN(this.m * AIN[this.pin] + this.b)
         ELSE
           RETURN(this.m * AIN[this.pin])
