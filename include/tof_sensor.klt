@@ -6,3 +6,4 @@ tof_type_define
 VAR
   this : TOF_T
   last_range IN DRAM : REAL
+  uninit_r : ARRAY[MAX_SAMPLES] OF REAL

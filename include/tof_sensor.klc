@@ -12,10 +12,51 @@ PROGRAM class_name
 %include errors.klh
 %include math.klh
 %include tof_sensor.klh
+%include tof_sensor.private.klh
 
 --private
+ROUTINE read_measurement_
+  BEGIN
+    last_range = calib_
+    --if laser out of range return uninitialized value
+    IF (ABS(last_range) > this.m*this.max) THEN
+      SET_UNINIT_R('class_name', 'last_range')
+    ENDIF
+  END read_measurement_
+
+ROUTINE read_range_
+  VAR
+    time_out : BOOLEAN
+    i : INTEGER
+  BEGIN
+    --ranging measurement is a rolling
+    --list of values updated every 
+    --MAX_SAMPLES*SAMPLE_TIME ms
+    IF this.last_index > MAX_SAMPLES THEN
+      this.last_index = 1
+    ENDIF
+
+    --get measurement
+    this.measuremnts[this.last_index] = calib_
+
+    IF (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
+      -- warning.. might not be a solution?????
+      --if laser out of range uninitialize whole sample
+      this.measuremnts = uninit_r
+    ENDIF
+
+    this.last_index = this.last_index + 1
+
+    --average to get mean reading
+    --averaging ignores uninitalized values
+    -- warning.. if all values are uninitialized
+    --           function returns 0. May not be
+    --           desirable
+    last_range = math__average_real(this.measuremnts)
+  END read_range_
+
 --routine to convert analog signal to real value
-ROUTINE calib_ : REAL
+ROUTINE calib_
   BEGIN
     SELECT this.mode OF
       CASE(MODE_4_20MA):
@@ -35,9 +76,7 @@ ROUTINE calib_ : REAL
   END calib_
 
 --initialization
-ROUTINE constructor
-  VAR
-    uninit_r : ARRAY[MAX_SAMPLES] OF REAL 
+ROUTINE constructor 
   BEGIN
     --set pin
     this.pin = io_num
@@ -58,8 +97,6 @@ ROUTINE constructor
   END constructor
 
 ROUTINE destructor
-  VAR
-    uninit_r : ARRAY[MAX_SAMPLES] OF REAL 
   BEGIN
     --uninitialize measurement array
     this.measuremnts = uninit_r
@@ -86,44 +123,27 @@ ROUTINE set_measurement_type
   END set_measurement_type
 
 --ranging
+--public exposure for ranging
 ROUTINE read_measurement
   BEGIN
-    RETURN(calib_)
+    read_measurement_
+    RETURN(last_range)
   END read_measurement
 
 ROUTINE read_range
-  VAR
-    time_out : BOOLEAN
-    laser_value :	REAL
-    i : INTEGER
   BEGIN
-    --ranging measurement is a rolling
-    --list of values updated every 
-    --MAX_SAMPLES*SAMPLE_TIME ms
-    IF this.last_index > MAX_SAMPLES THEN
-      this.last_index = 1
-    ENDIF
-
-    --get measurement
-    this.measuremnts[this.last_index] = calib_
-
-    this.last_index = this.last_index + 1
-
-    --average to get mean reading
-    --averaging ignores uninitalized values
-    laser_value = math__average_real(this.measuremnts)
-
-    RETURN(laser_value)
+    read_range_
+    RETURN(last_range)
   END read_range
 
 --task
 BEGIN
   WHILE(TRUE) DO
     IF (this.meas_type = 1) THEN
-      last_range = read_measurement
+      read_measurement_
     ENDIF
     IF (this.meas_type = 2) THEN
-      last_range = read_range
+      read_range_
     ENDIF
 
     DELAY this.sample_time
