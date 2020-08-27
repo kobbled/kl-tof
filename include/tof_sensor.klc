@@ -19,8 +19,16 @@ ROUTINE read_measurement_
   BEGIN
     last_range = calib_
     --if laser out of range return uninitialized value
-    IF (ABS(last_range) > this.m*this.max) THEN
+
+    --range should be 0->(this.m*this.max+this.b)
+    --contiguous digital range, can just use
+    --analog value and max const as out of range
+    --value is the same above or below.
+    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] > this.max) THEN
       SET_UNINIT_R('class_name', 'last_range')
+    ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) > this.m*this.max) THEN
+      SET_UNINIT_R('class_name', 'last_range')
+    ENDIF
     ENDIF
   END read_measurement_
 
@@ -39,10 +47,15 @@ ROUTINE read_range_
     --get measurement
     this.measuremnts[this.last_index] = calib_
 
-    IF (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
-      -- warning.. might not be a solution?????
-      --if laser out of range uninitialize whole sample
+    -- warning.. might not be a solution?????
+    --if laser out of range uninitialize whole sample
+    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] > this.max) THEN
       this.measuremnts = uninit_r
+    ELSE IF (this.mode=MODE_5_5V) AND (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
+      this.measuremnts = uninit_r
+    ELSE
+      karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
+    ENDIF
     ENDIF
 
     this.last_index = this.last_index + 1
