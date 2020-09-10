@@ -13,15 +13,14 @@ VAR
   head : STRING[6]
   feed_delay FROM test_tof : INTEGER
 
-%include errors.klt
 --port types
 %include kliotyps.kl
 
 --sensor definition
 %include sensor_calib_test_settings.klt
 
-%include errors.klh
-%include csv.klh
+%from csv.klh %import read_open, read_close, read_line, read_rarr
+
 
 BEGIN
   --make simulated

@@ -23,7 +23,7 @@ VAR
 
 %include display.klh
 %include multitask.klh
-%include strings.klh
+%from strings.klh %import r_to_s
 
 BEGIN
   --clear display

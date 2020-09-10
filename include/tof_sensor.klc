@@ -9,8 +9,8 @@ PROGRAM class_name
 %include errors.klt
 %include tof_sensor.klt
 
-%include errors.klh
-%include math.klh
+%from errors.klh %import SET_UNINIT_R, karelError
+%from math.klh %import average_real
 %include tof_sensor.klh
 %include tof_sensor.private.klh
 
