@@ -94,7 +94,7 @@ ROUTINE constructor
     --set pin
     this.pin = io_num
     --set analog mode
-    this.mode = ai_mode 
+    this.mode = ai_mode
     --set linear interpolation
     this.m = slope
     this.b = intercpt
@@ -144,8 +144,12 @@ ROUTINE read_measurement
   END read_measurement
 
 ROUTINE read_range
+  VAR
+    i : INTEGER
   BEGIN
-    read_range_
+    FOR i=1 TO MAX_SAMPLES DO
+      read_range_
+    ENDFOR
     RETURN(last_range)
   END read_range
 
