@@ -3,17 +3,27 @@ PROGRAM test_tof
 %NOPAUSE = COMMAND + TPENABLE + ERROR
 %UNINITVARS
 
+--uncomment to run simulation programs
+--comment to stop from running
+--define RUN_AVERAGING_SIM
+%define RUN_SIGNAL_TEST_SIM
+
+%define AVE_MEASURE_SIM 'FR:\tof_rand.csv'
+%define SIGNAL_SIM 'FR:\tof_sign.csv'
+
 CONST
   SIM_TIME = 50
   NUMOFSAMPLES = 4
 
 VAR
   last_range FROM tof1 : REAL
+  is_signal FROM tof1 : BOOLEAN
   status : INTEGER
   tof_task : BOOLEAN
   sim_task : BOOLEAN
   feed_delay : INTEGER
   range_time : INTEGER
+  sim_file : STRING[16]
 
 %include display.c.klt
 --sensor definition
@@ -23,7 +33,7 @@ VAR
 
 %include display.klh
 %include multitask.klh
-%from strings.klh %import r_to_s
+%from strings.klh %import r_to_s, b_to_s
 
 BEGIN
   --clear display
@@ -31,11 +41,19 @@ BEGIN
   --show display
   display__show
 
+  --set simulation program
+%ifdef RUN_AVERAGING_SIM
+  sim_file = AVE_MEASURE_SIM
+%endif
+%ifdef RUN_SIGNAL_TEST_SIM
+  sim_file = SIGNAL_SIM
+%endif
+
   --set sample time the same as feed delay
   feed_delay = SIM_TIME
 
   --create tof object
-  tof1__constructor(SENSOR_PIN, SENS_MODE, SENS_MAX, SENS_SLOPE, SENS_INTER)
+  tof1__constructor(SENSOR_PIN, SENS_MODE, SENS_MAX, SENS_SLOPE, SENS_INTER, DIGITAL_PIN)
   --set custom sample time
   tof1__set_sample_time(feed_delay)
   --set to average ranging mode
@@ -51,8 +69,28 @@ BEGIN
   --start simulating AI port
   sim_task = task__thread('tst_sim_tof')
 
+%ifdef RUN_SIGNAL_TEST_SIM 
+%ifdef RUN_AVERAGING_SIM
+%error 'Only one program flag can be on to run test.'
+%endif
+%endif
+
+%ifdef RUN_SIGNAL_TEST_SIM
+  DELAY 100
+  -- intialize data signal
+  display__print('Reading Signal : ' + b_to_s(is_signal))
+%endif
+
   REPEAT
+%ifdef RUN_AVERAGING_SIM
     display__print(r_to_s(last_range))
+%endif
+%ifdef RUN_SIGNAL_TEST_SIM
+    IF tof1__watch_change THEN
+    
+      display__print('Reading Signal : ' + b_to_s(is_signal))
+    ENDIF
+%endif
     DELAY range_time
   UNTIL(task__is_task_done('tst_sim_tof'))
 

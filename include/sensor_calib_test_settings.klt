@@ -12,6 +12,7 @@ CONST
   --regression parameters
   SENS_SLOPE = 0.1
   SENS_INTER = 0
-  SENS_MAX = 0 -- not needed for 0-5V
+  SENS_MAX = 1000 -- max analog value
+  DIGITAL_PIN = 0 -- set to 0 if no pin exists
 
 %endif -- tof_test_set_t

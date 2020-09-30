@@ -8,7 +8,7 @@ header_if -- ifndef class
 header_def -- define class
 
 declare_member(class_name,constructor,class_name,cntr)
-ROUTINE constructor (io_num, ai_mode, max_ai : INTEGER; slope, intercpt : REAL) FROM class_name
+ROUTINE constructor (io_num, ai_mode, max_ai : INTEGER; slope, intercpt : REAL; digital_io : INTEGER) FROM class_name
 declare_member(class_name,destructor,class_name,dsct)
 ROUTINE destructor FROM class_name
 --setters
@@ -21,5 +21,13 @@ declare_member(class_name,read_measurement,class_name,rmeas)
 ROUTINE read_measurement : REAL FROM class_name
 declare_member(class_name,read_range,class_name,rdrng)
 ROUTINE read_range : REAL FROM class_name
+declare_member(class_name,read_signal,class_name,rsgnl)
+ROUTINE read_signal : BOOLEAN FROM class_name
+declare_member(class_name,watch_rising_edge,class_name,risng)
+ROUTINE watch_rising_edge : BOOLEAN FROM class_name
+declare_member(class_name,watch_falling_edge,class_name,falng)
+ROUTINE watch_falling_edge : BOOLEAN FROM class_name
+declare_member(class_name,watch_change,class_name,chgsg)
+ROUTINE watch_change : BOOLEAN FROM class_name
 
 %endif --end TOF Sensor header

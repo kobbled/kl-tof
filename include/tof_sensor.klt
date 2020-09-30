@@ -6,4 +6,7 @@ tof_type_define
 VAR
   this : TOF_T
   last_range IN DRAM : REAL
+  is_signal IN DRAM : BOOLEAN
+  prev_signal, seen : BOOLEAN  --seen determines if any other tasks
+                               --have seen that change in DI state
   uninit_r : ARRAY[MAX_SAMPLES] OF REAL

@@ -2,16 +2,14 @@ PROGRAM tst_sim_tof
 %NOLOCKGROUP
 %UNINITVARS
 
-CONST
-  SIM_NAME = 'FR:\tof_rand.csv'
-
-VAR 
+VAR
+  feed_delay FROM test_tof : INTEGER
+  sim_file FROM test_tof : STRING[16]
   fl : FILE
   val : ARRAY[1] OF REAL
   uninit_r : ARRAY[1] OF REAL
   status : INTEGER
   head : STRING[6]
-  feed_delay FROM test_tof : INTEGER
 
 --port types
 %include kliotyps.kl
@@ -27,14 +25,14 @@ BEGIN
   SET_PORT_SIM(io_anin, SENSOR_PIN, 0, status)
 
   --open csv file
-  csv__read_open(SIM_NAME, fl)
+  csv__read_open(sim_file, fl)
   --read header
-  head = csv__read_line(SIM_NAME, fl)
+  head = csv__read_line(sim_file, fl)
   
   val[1] = 0
   REPEAT
     --read next simulated value
-    csv__read_rarr(SIM_NAME, fl, ',', val, uninit_r)
+    csv__read_rarr(sim_file, fl, ',', val, uninit_r)
     IF UNINIT(val[1]) THEN GOTO break ; ENDIF
     --set value
     SET_PORT_VAL(io_anin, SENSOR_PIN, TRUNC(val[1]), status)

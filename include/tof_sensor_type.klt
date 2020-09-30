@@ -24,5 +24,6 @@
                               --so averaging the analog would give 
                               --wrong result
     time_out : BOOLEAN
+    digital : BYTE
   ENDSTRUCTURE`
 %mode pop

@@ -13,7 +13,8 @@
   "tests" : [
     "test/test_tof.kl",
     "test/tst_sim_tof.kl",
-    "test/tof_rand.csv"
+    "test/tof_rand.csv",
+    "test/tof_sign.csv"
   ],
   "depends" : [
     "display",

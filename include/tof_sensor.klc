@@ -53,8 +53,6 @@ ROUTINE read_range_
       this.measuremnts = uninit_r
     ELSE IF (this.mode=MODE_5_5V) AND (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
       this.measuremnts = uninit_r
-    ELSE
-      karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
     ENDIF
     ENDIF
 
@@ -67,6 +65,22 @@ ROUTINE read_range_
     --           desirable
     last_range = math__average_real(this.measuremnts)
   END read_range_
+
+ROUTINE read_signal_
+  BEGIN
+    IF this.digital > 0 THEN
+      is_signal = DIN[this.digital]
+    ELSE
+      IF (this.mode=MODE_0_5V) AND (AIN[this.pin] <= this.max) THEN
+        is_signal = TRUE
+      ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) <= this.m*this.max) THEN
+        is_signal = TRUE
+      ELSE
+        is_signal = FALSE
+      ENDIF
+      ENDIF
+    ENDIF
+  END read_signal_
 
 --routine to convert analog signal to real value
 ROUTINE calib_
@@ -107,6 +121,14 @@ ROUTINE constructor
     this.measuremnts = uninit_r
     -- ranging type
     this.meas_type = 1 -- default to single measurement
+    -- specify digital pin for determining if an input reading
+    -- is present
+    this.digital = digital_io
+
+    -- initialize values
+    is_signal = FALSE
+    prev_signal = FALSE
+    seen = TRUE
   END constructor
 
 ROUTINE destructor
@@ -153,6 +175,43 @@ ROUTINE read_range
     RETURN(last_range)
   END read_range
 
+ROUTINE read_signal
+  BEGIN
+    read_signal_
+    RETURN(is_signal)
+  END read_signal
+
+ROUTINE watch_rising_edge
+  VAR
+    b : BOOLEAN
+  BEGIN
+    b = FALSE
+    IF is_signal AND NOT prev_signal THEN b = TRUE ; ENDIF
+    seen = TRUE
+    RETURN(b)
+  END watch_rising_edge
+
+ROUTINE watch_falling_edge
+  VAR
+    b : BOOLEAN
+  BEGIN
+    b = FALSE
+    IF NOT is_signal AND prev_signal THEN b = TRUE ; ENDIF
+    seen = TRUE
+    RETURN(b)
+  END watch_falling_edge
+
+ROUTINE watch_change
+  VAR
+    b : BOOLEAN
+  BEGIN
+    b = FALSE
+    IF is_signal <> prev_signal THEN b = TRUE ; ENDIF
+    seen = TRUE
+    RETURN(b)
+  END watch_change
+
+
 --task
 BEGIN
   WHILE(TRUE) DO
@@ -162,8 +221,16 @@ BEGIN
     IF (this.meas_type = 2) THEN
       read_range_
     ENDIF
+    --determine digital signal
+    read_signal_
 
     DELAY this.sample_time
+
+    IF seen THEN 
+      prev_signal = is_signal
+      seen = FALSE
+    ENDIF
+
   ENDWHILE
 END class_name
 

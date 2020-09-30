@@ -9,6 +9,8 @@ declare_member(class_name,read_measurement_,class_name,pmeas)
 ROUTINE read_measurement_ FROM class_name
 declare_member(class_name,read_range_,class_name,prng)
 ROUTINE read_range_ FROM class_name
+declare_member(class_name,read_signal_,class_name,psgl)
+ROUTINE read_signal_ FROM class_name
 ROUTINE calib_ : REAL FROM class_name
 
 %endif -- TOF_SENS_PRIVATE_H
