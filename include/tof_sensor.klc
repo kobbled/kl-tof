@@ -90,6 +90,26 @@ ROUTINE read_signal_
 %endif
   END read_signal_
 
+ROUTINE read_zero_
+  BEGIN
+
+%ifeq ZERO_TYPE VIRTUAL
+    IF ABS(last_range) < ZERO_TOLERANCE THEN
+      zeroed = TRUE
+    ELSE
+      zeroed = FALSE
+    ENDIF
+    --set DOUT pin
+    ZERO_TYPE_STR = zeroed
+%else
+%ifeq ZERO_TYPE PHYSICAL
+    zeroed = ZERO_TYPE_STR
+%else
+%error 'ZERO_TYPE must be specified as VIRTUAL or PHYSICAL'
+%endif
+%endif
+  END read_zero_
+
 --routine to convert analog signal to real value
 ROUTINE calib_
   BEGIN
@@ -131,6 +151,7 @@ ROUTINE constructor
     this.meas_type = 1 -- default to single measurement
 
     -- initialize values
+    zeroed = FALSE
     is_signal = FALSE
     prev_signal = FALSE
     seen = TRUE
@@ -186,6 +207,12 @@ ROUTINE read_signal
     RETURN(is_signal)
   END read_signal
 
+ROUTINE read_zero
+  BEGIN
+    read_zero_
+    RETURN(zeroed)
+  END read_zero
+
 ROUTINE watch_rising_edge
   VAR
     b : BOOLEAN
@@ -229,6 +256,8 @@ BEGIN
 
     --determine digital signal
     read_signal_
+    --determine if zeros
+    read_zero_
 
     DELAY this.sample_time
 

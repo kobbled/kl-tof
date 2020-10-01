@@ -23,6 +23,7 @@ TYPE
 VAR
   this : TOF_T
   last_range IN DRAM : REAL
+  zeroed IN DRAM : BOOLEAN
   is_signal IN DRAM : BOOLEAN
   prev_signal, seen : BOOLEAN  --seen determines if any other tasks
                                --have seen that change in DI state

@@ -9,10 +9,12 @@ PROGRAM test_tof
 --comment to stop from running
 
 --define RUN_AVERAGING_SIM
-%define RUN_SIGNAL_TEST_SIM
+--define RUN_SIGNAL_TEST_SIM
+%define RUN_ZERO_TEST_SIM
 
 %define AVE_MEASURE_SIM 'FR:\tof_rand.csv'
 %define SIGNAL_SIM 'FR:\tof_sign.csv'
+%define ZERO_SIM 'FR:\tof_zero.csv'
 
 CONST
   SIM_TIME = 50
@@ -21,6 +23,7 @@ CONST
 VAR
   last_range FROM tof1 : REAL
   is_signal FROM tof1 : BOOLEAN
+  zeroed FROM tof1 : BOOLEAN
   status : INTEGER
   tof_task : BOOLEAN
   sim_task : BOOLEAN
@@ -50,6 +53,9 @@ BEGIN
 %ifdef RUN_SIGNAL_TEST_SIM
   sim_file = SIGNAL_SIM
 %endif
+%ifdef RUN_ZERO_TEST_SIM
+  sim_file = ZERO_SIM
+%endif
 
   --set sample time the same as feed delay
   feed_delay = SIM_TIME
@@ -71,10 +77,9 @@ BEGIN
   --start simulating AI port
   sim_task = task__thread('tst_sim_tof')
 
-%ifdef RUN_SIGNAL_TEST_SIM 
-%ifdef RUN_AVERAGING_SIM
+%if defined(RUN_SIGNAL_TEST_SIM) || defined(RUN_AVERAGING_SIM) || defined(RUN_ZERO_TEST_SIM)
+%else 
 %error 'Only one program flag can be on to run test.'
-%endif
 %endif
 
 %ifdef RUN_SIGNAL_TEST_SIM
@@ -92,6 +97,9 @@ BEGIN
     
       display__print('Reading Signal : ' + b_to_s(is_signal))
     ENDIF
+%endif
+%ifdef RUN_ZERO_TEST_SIM
+    display__print('Reading Signal : ' + b_to_s(zeroed))
 %endif
     DELAY range_time
   UNTIL(task__is_task_done('tst_sim_tof'))

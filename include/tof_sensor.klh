@@ -23,6 +23,8 @@ declare_member(class_name,read_range,class_name,rdrng)
 ROUTINE read_range : REAL FROM class_name
 declare_member(class_name,read_signal,class_name,rsgnl)
 ROUTINE read_signal : BOOLEAN FROM class_name
+declare_member(class_name,read_zero,class_name,rzero)
+ROUTINE read_zero : BOOLEAN FROM class_name
 declare_member(class_name,watch_rising_edge,class_name,risng)
 ROUTINE watch_rising_edge : BOOLEAN FROM class_name
 declare_member(class_name,watch_falling_edge,class_name,falng)

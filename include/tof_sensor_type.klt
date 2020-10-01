@@ -21,3 +21,13 @@
 %endif
 %endif
 
+%ifeq ZERO_TYPE VIRTUAL
+%defeval ZERO_TYPE_STR DOUT[ZERO_PIN]
+%else
+%ifeq ZERO_TYPE PHYSICAL
+%defeval ZERO_TYPE_STR DIN[ZERO_PIN]
+%else
+%error 'ZERO_TYPE must be specified as VIRTUAL or PHYSICAL'
+%endif
+%endif
+
