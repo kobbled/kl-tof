@@ -8,7 +8,7 @@ header_if -- ifndef class
 header_def -- define class
 
 declare_member(class_name,constructor,class_name,cntr)
-ROUTINE constructor (io_num, ai_mode, max_ai : INTEGER; slope, intercpt : REAL; digital_io : INTEGER) FROM class_name
+ROUTINE constructor FROM class_name
 declare_member(class_name,destructor,class_name,dsct)
 ROUTINE destructor FROM class_name
 --setters

@@ -1,18 +1,33 @@
 %ifndef tof_test_set_t
 %define tof_test_set_t
 
-%include tof_sensor.c.klt
+--useful for using class members/variables in other programs
+%define SENSOR_CLASS tof1
 
-CONST
+--sampling is a rolling window updated
+--every MAX_SAMPLES*SAMPLE_TIME ms
+--number of ranging samples to hold
+%define  MAX_SAMPLES 4
+-- sampling time of each measurement
+%define SAMPLE_MS 10
+
+
   --definition of sensor to pass to class
   -- analog input number
-  SENSOR_PIN = 1
+%define SENSOR_PIN 1
   -- analog mode
-  SENS_MODE = MODE_0_5V
+%define SENS_MODE MODE_0_5V
   --regression parameters
-  SENS_SLOPE = 0.1
-  SENS_INTER = 0
-  SENS_MAX = 1000 -- max analog value
-  DIGITAL_PIN = 0 -- set to 0 if no pin exists
+%define SENS_SLOPE 0.1
+%define SENS_INTER 0
+%define SENS_MAX 1000 -- max analog value
+  --define physical DI pin as 'REAL', or a virtual DO pin as 'VIRTUAL'
+%define SIGNAL_TYPE VIRTUAL
+  -- signal pin number
+%define SIGNAL_PIN  33
+  --define physical DI pin as 'REAL', or a virtual DO pin as 'VIRTUAL'
+%define ZERO_TYPE VIRTUAL
+  -- signal pin number
+%define ZERO_PIN  34
 
 %endif -- tof_test_set_t

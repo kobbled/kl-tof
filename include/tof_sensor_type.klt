@@ -7,23 +7,17 @@
 -- sampling time of each measurement
 %define SAMPLE_MS 10
 
-%mode push
-%mode string QQQ "`" "`" "\\"
-%define tof_type_define `TYPE
-  TOF_T FROM class_name = STRUCTURE
-    pin  : BYTE
-    mode : BYTE
-    m : REAL
-    b : REAL
-    max : SHORT
-    sample_time : SHORT
-    meas_type : BYTE -- 1 = single measure, 2 = average measure
-    last_index : INTEGER
-    measuremnts : ARRAY[MAX_SAMPLES] OF REAL --measurements in mm
-                              --as anolog values loop back to 4096
-                              --so averaging the analog would give 
-                              --wrong result
-    time_out : BOOLEAN
-    digital : BYTE
-  ENDSTRUCTURE`
-%mode pop
+-- tolerance for zero flag
+%define ZERO_TOLERANCE 0.25
+
+
+%ifeq SIGNAL_TYPE VIRTUAL
+%defeval SIGNAL_TYPE_STR DOUT[SIGNAL_PIN]
+%else
+%ifeq SIGNAL_TYPE PHYSICAL
+%defeval SIGNAL_TYPE_STR DIN[SIGNAL_PIN]
+%else
+%error 'SIGNAL_TYPE must be specified as VIRTUAL or PHYSICAL'
+%endif
+%endif
+

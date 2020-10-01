@@ -1,7 +1,24 @@
 -- USER STRUCT
-tof_type_define
 
 %include tof_sensor.c.klt
+
+TYPE
+  TOF_T FROM class_name = STRUCTURE
+    pin  : BYTE
+    mode : BYTE
+    m : REAL
+    b : REAL
+    max : SHORT
+    sample_time : SHORT
+    meas_type : BYTE -- 1 = single measure, 2 = average measure
+    last_index : INTEGER
+    measuremnts : ARRAY[MAX_SAMPLES] OF REAL --measurements in mm
+                              --as anolog values loop back to 4096
+                              --so averaging the analog would give 
+                              --wrong result
+    time_out : BOOLEAN
+    digital : BYTE
+  ENDSTRUCTURE
 
 VAR
   this : TOF_T

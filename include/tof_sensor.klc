@@ -7,6 +7,7 @@ PROGRAM class_name
 %include namespace.m
 
 %include errors.klt
+%include tof_sensor_type.klt
 %include tof_sensor.klt
 
 %from errors.klh %import SET_UNINIT_R, karelError
@@ -68,18 +69,25 @@ ROUTINE read_range_
 
 ROUTINE read_signal_
   BEGIN
-    IF this.digital > 0 THEN
-      is_signal = DIN[this.digital]
+
+%ifeq SIGNAL_TYPE VIRTUAL
+    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] <= this.max) THEN
+      is_signal = TRUE
+    ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) <= this.m*this.max) THEN
+      is_signal = TRUE
     ELSE
-      IF (this.mode=MODE_0_5V) AND (AIN[this.pin] <= this.max) THEN
-        is_signal = TRUE
-      ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) <= this.m*this.max) THEN
-        is_signal = TRUE
-      ELSE
-        is_signal = FALSE
-      ENDIF
-      ENDIF
+      is_signal = FALSE
     ENDIF
+    ENDIF
+    --set DOUT pin
+    SIGNAL_TYPE_STR = is_signal
+%else
+%ifeq SIGNAL_TYPE PHYSICAL
+    is_signal = SIGNAL_TYPE_STR
+%else
+%error 'SIGNAL_TYPE must be specified as VIRTUAL or PHYSICAL'
+%endif
+%endif
   END read_signal_
 
 --routine to convert analog signal to real value
@@ -106,13 +114,13 @@ ROUTINE calib_
 ROUTINE constructor 
   BEGIN
     --set pin
-    this.pin = io_num
+    this.pin = SENSOR_PIN
     --set analog mode
-    this.mode = ai_mode
+    this.mode = SENS_MODE
     --set linear interpolation
-    this.m = slope
-    this.b = intercpt
-    this.max = max_ai
+    this.m = SENS_SLOPE
+    this.b = SENS_INTER
+    this.max = SENS_MAX
     --set sampling time
     this.sample_time = SAMPLE_MS
     --set ranging index
@@ -121,9 +129,6 @@ ROUTINE constructor
     this.measuremnts = uninit_r
     -- ranging type
     this.meas_type = 1 -- default to single measurement
-    -- specify digital pin for determining if an input reading
-    -- is present
-    this.digital = digital_io
 
     -- initialize values
     is_signal = FALSE
@@ -221,6 +226,7 @@ BEGIN
     IF (this.meas_type = 2) THEN
       read_range_
     ENDIF
+
     --determine digital signal
     read_signal_
 
