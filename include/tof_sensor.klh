@@ -16,6 +16,8 @@ declare_member(class_name,set_measurement_type,class_name,mestp)
 ROUTINE set_measurement_type (meas_type : INTEGER) FROM class_name
 declare_member(class_name,set_sample_time,class_name,stsmp)
 ROUTINE set_sample_time (smpl_tme : INTEGER) FROM class_name
+declare_member(class_name,set_sim_analog,class_name,canlg)
+ROUTINE set_sim_analog( meas_mm : REAL) FROM class_name
 --getters
 declare_member(class_name,read_measurement,class_name,rmeas)
 ROUTINE read_measurement : REAL FROM class_name

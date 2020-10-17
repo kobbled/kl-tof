@@ -6,11 +6,14 @@ PROGRAM class_name
 
 %include namespace.m
 
+--port types
+%include kliotyps.kl
+
 %include errors.klt
 %include tof_sensor_type.klt
 %include tof_sensor.klt
 
-%from errors.klh %import SET_UNINIT_R, karelError
+%from errors.klh %import SET_UNINIT_R, karelError, CHK_STAT
 %from math.klh %import average_real
 %include tof_sensor.klh
 %include tof_sensor.private.klh
@@ -182,6 +185,37 @@ ROUTINE set_measurement_type
         karelError(INVALID_TYPE_CODE, 'measurement type for sensor not properly set.', ER_ABORT)
     ENDSELECT
   END set_measurement_type
+
+ROUTINE set_sim_analog
+  VAR
+    analog_val : INTEGER
+    sim : BOOLEAN
+    status : INTEGER
+  BEGIN
+    --check if AI pin is simulated
+    GET_PORT_SIM(io_anin, (this.pin), sim, status)
+    CHK_STAT(status)
+    IF NOT sim THEN
+      karelError(PORT_NOT_SIMULATED, 'analog port for tof must be simulated.', ER_ABORT)
+    ENDIF
+    --calculate digital analog signal
+    SELECT this.mode OF
+      CASE(MODE_4_20MA):
+        karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
+      CASE(MODE_0_5V):
+        analog_val = TRUNC((meas_mm - this.b)/this.m)
+      CASE(MODE_5_5V):
+        IF (meas_mm < 0) THEN
+          analog_val = TRUNC((meas_mm - this.b)/this.m)
+        ELSE
+          analog_val = TRUNC(meas_mm/this.m)
+        ENDIF
+      ELSE:
+        karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
+    ENDSELECT
+    --set analog signal
+    SET_PORT_VAL(io_anin, (this.pin), analog_val, status)
+  END set_sim_analog 
 
 --ranging
 --public exposure for ranging
