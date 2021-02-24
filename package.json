@@ -18,12 +18,15 @@
     "test/tof_zero.csv"
   ],
   "depends" : [
-    "display",
-    "Strings",
     "errors",
     "math",
+    "ktransw-macros"
+  ],
+  "tests-depends" : [
     "csv",
     "multitask",
-    "ktransw-macros"
+    "Strings",
+    "display",
+    "KUnit"
   ]
 }
