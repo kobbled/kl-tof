@@ -1,0 +1,27 @@
+%define SCANPART_CONFIG_FILENAME defaultscan.klt
+
+%define SCAN_FILENAME hs1_scan.csv
+
+%define SCAN_FINISH_FLAG_NAME path_done
+
+%define SCAN_TRIGGER_TYPE DOUT
+%define SCAN_TRIGGER_PIN 50
+
+%define RBT_GRP 1
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define scan_trigger_condition(typ,pin_no) `typ[pin_no]`
+%define scan_trigger_reset(typ,pin_no) `typ[pin_no] = OFF`
+%mode pop
+
+--tof sensor
+------------------
+%defeval SENSOR_CLASS tof1
+%define SENSOR_TEMPLATE panasonic_MLDS.klt
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define define_scansensor(object_name,cnfg_file) `%class object_name('tof_sensor.klc','tof_sensor.klh','cnfg_file')`
+%mode pop
+------------------

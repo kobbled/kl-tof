@@ -1,0 +1,14 @@
+--header
+%include header_guard.m
+--oop
+%include namespace.m
+
+--start header file
+header_if -- ifndef class
+header_def -- define class
+
+declare_member(class_name,set_coord_sys,class_name,stcs)
+ROUTINE set_coord_sys(crd_sys : INTEGER; crd_axs : INTEGER) FROM class_name
+declare_member(class_name,set_scan_finished,class_name,stsf)
+ROUTINE set_scan_finished FROM class_name
+%endif --end header

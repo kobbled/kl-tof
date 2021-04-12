@@ -9,6 +9,7 @@
   ],
   "includes" : [
     "include",
+    "include/scan_class",
     "include/sensor_configs"
   ],
   "tests" : [
@@ -21,13 +22,17 @@
   "depends" : [
     "errors",
     "math",
+    "display",
+    "registers",
+    "pose",
+    "paths",
+    "csv",
+    "multitask",
+    "systemlib",
+    "Strings",
     "ktransw-macros"
   ],
   "tests-depends" : [
-    "csv",
-    "multitask",
-    "Strings",
-    "display",
     "KUnit"
   ]
 }

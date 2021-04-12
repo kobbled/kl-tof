@@ -1,0 +1,15 @@
+PROGRAM test_scan
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+%UNINITVARS
+
+%include standard.m
+
+%include kunit.klh
+
+%class tstscn('scan_part.klc','scan_part.klh','defaultscan.klt')
+
+BEGIN
+
+  kunit_done
+END test_scan

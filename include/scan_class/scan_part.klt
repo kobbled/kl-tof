@@ -1,0 +1,22 @@
+%ifndef scan_part_t
+%define scan_part_t
+
+CONST
+  PIPE_FILE = 'PIP:SCANDATA.DAT'
+  --semaphores
+  TOF_SEMA = 1
+  CSV_SEMA = 2
+  --interrupts
+  INRPT_LOGPOS = 1
+  --
+
+--wait 1s for pipe to write to csv file
+%define MAX_WAIT 250
+--frequency to check if pipe needs to be cleared
+%define CYCLE_TIME 100
+--delay time if write operation hasn't completed in time
+%define MAX_DELAY 1000
+--max pipe size is # of lines
+%define MAX_PIPE 200
+
+%endif --scan_part_t
