@@ -6,6 +6,7 @@ VAR
   feed_delay FROM test_tof : INTEGER
   sim_file FROM test_tof : STRING[16]
   fl : FILE
+  b : BOOLEAN
   val : ARRAY[1] OF REAL
   uninit_r : ARRAY[1] OF REAL
   status : INTEGER
@@ -32,14 +33,13 @@ BEGIN
   val[1] = 0
   REPEAT
     --read next simulated value
-    csv__read_rarr(sim_file, fl, ',', val, uninit_r)
-    IF UNINIT(val[1]) THEN GOTO break ; ENDIF
-    --set value
-    SET_PORT_VAL(io_anin, SENSOR_PIN, TRUNC(val[1]), status)
+    b = csv__read_rarr(sim_file, fl, ',', val, uninit_r)
+    IF b THEN
+      --set value
+      SET_PORT_VAL(io_anin, SENSOR_PIN, TRUNC(val[1]), status)
+    ENDIF
     DELAY feed_delay
-  UNTIL(UNINIT(val[1]))
-
-  break::
+  UNTIL(NOT b)
 
   csv__read_close(fl)
 
