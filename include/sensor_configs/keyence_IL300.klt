@@ -1,0 +1,39 @@
+%ifndef IL300_t
+%define IL300_t
+
+--tof class members
+-- *****
+-- analog input number
+%define SENSOR_PIN 2
+  -- analog mode
+%define SENS_MODE MODE_5_5V
+  --regression parameters
+%define SENS_SLOPE 0.14
+%define SENS_INTER -573.44
+-- max analog
+%define SENS_MAX 1000
+  --total range
+%define TOTAL_RANGE 280
+  --acceptable distance to search with sensor
+%define SEARCH_DIST_SENSOR 80
+
+-- digitial signals
+  --define physical DI pin as 'REAL', or a virtual DO pin as 'VIRTUAL'
+%define SIGNAL_TYPE VIRTUAL
+  -- signal pin number
+%define SIGNAL_PIN  33
+  --define physical DI pin as 'REAL', or a virtual DO pin as 'VIRTUAL'
+%define ZERO_TYPE VIRTUAL
+  -- signal pin number
+%define ZERO_PIN  34
+-- *****
+
+--sampling is a rolling window updated
+--every MAX_SAMPLES*SAMPLE_TIME ms
+--number of ranging samples to hold
+%define  MAX_SAMPLES 4
+-- sampling time of each measurement
+%define SAMPLE_MS 10
+
+ 
+%endif -- IL300_t
