@@ -11,8 +11,7 @@ PROGRAM class_name
 %include errors.klt
 %include display.c.klt
 %include csv.klt
-%include paths.t.klt
-%include paths.c.klt
+%include paths.klt
 
 %include scan_part.klt
 
@@ -23,7 +22,6 @@ VAR
   last_range  FROM SENSOR_CLASS : REAL --averaged sensor readings
   csv_name : STRING[20]
   csv_file : FILE
-  status  : INTEGER
   tof_task : BOOLEAN
   time_out : BOOLEAN
   counter : INTEGER
@@ -33,6 +31,7 @@ VAR
   coord_sys : t_COORD_SYS
   rbt_pos 	:	XYZWPR
   coord : VECTOR
+  orient : VECTOR
 
 %from errors.klh %import karelError, CHK_STAT
 %from display.klh %import clear, show
@@ -57,6 +56,17 @@ define_scansensor(SENSOR_CLASS,SENSOR_TEMPLATE)
 
 %include scan_part.klh
 
+ROUTINE init
+  BEGIN
+    coord_sys.system = crd_sys
+    coord_sys.z_axis = crd_axs
+    orient = orientation
+  END init
+
+ROUTINE set_orientation
+  BEGIN
+    orient = orientation
+  END set_orientation
 
 ROUTINE set_coord_sys
   BEGIN
@@ -71,7 +81,8 @@ ROUTINE set_scan_finished
 
 ROUTINE log_pose
   VAR
-    pos : XYZWPR
+    p : XYZWPR
+    rngPos : XYZWPR
     origin : XYZWPR
   BEGIN
     IF NOT task__is_task_running('SENSOR_CLASS') THEN
@@ -93,13 +104,13 @@ ROUTINE log_pose
     --convert coord sys
     SELECT coord_sys.system OF
       CASE(PTH_CARTESAN):
-        pos = rbt_pos
+        p = rbt_pos
       CASE(PTH_CYLINDER):
         -- (theta,z,r) -> (x,y,z)
-        pos = pose__cartesian_to_cylindrical(origin, rbt_pos, (coord_sys.z_axis))
+        p = pose__cartesian_to_cylindrical(origin, rbt_pos, (coord_sys.z_axis))
         --remap theat between 0-360 for plotting and processing
-        IF pos.x < 0 THEN
-          pos.x = 360 + pos.x
+        IF p.x < 0 THEN
+          p.x = 360 + p.x
         ENDIF
       -- ..warning:: polar has not been added yet
     ENDSELECT
@@ -107,8 +118,11 @@ ROUTINE log_pose
     --update radius with height offset
     --if out of range will return uninitialized
     IF NOT UNINIT(last_range) THEN
-      pos.z = pos.z + last_range
+      rngPos = POS(0,0,last_range,orient.x,orient.y,orient.z, (ZEROPOS(1).config_data))
+      p = p:rngPos
     ENDIF
+
+    coord.x = p.x ; coord.y = p.y ; coord.z = p.z ; 
 
     --block writing to pipe in case data is
     --being read from pipe
@@ -116,7 +130,7 @@ ROUTINE log_pose
 
 %ifdef DEBUG_BUILD
     usrdis__print(DEBUG,'sensor val[' + i_to_s(counter) + ']: ' + r_to_s(last_range))
-    usrdis__print(DEBUG,'pose[' + i_to_s(counter) + ']: ' + pose_to_s(pos, ','))
+    usrdis__print(DEBUG,'pose[' + i_to_s(counter) + ']: ' + pose_to_s(p, ','))
 %endif
 
     --write vector to pipe
