@@ -139,7 +139,7 @@ ROUTINE log_pose
     POST_SEMA (pipe_sema)
 
     -- unblock interrupt
-    scan_trigger_reset(SCAN_TRIGGER_TYPE,SCAN_TRIGGER_PIN)
+    scan_trigger_reset
     ENABLE CONDITION[INRPT_LOGPOS]
     
   END log_pose
@@ -149,7 +149,7 @@ ROUTINE log_pose
 
 BEGIN
   CONDITION[INRPT_LOGPOS]:
-    WHEN scan_trigger_condition(SCAN_TRIGGER_TYPE,SCAN_TRIGGER_PIN) DO --TRIGGER to SNAP the laser value
+    WHEN scan_trigger_condition DO --TRIGGER to SNAP the laser value
       -- log lpos to pipe
       log_pose
   ENDCONDITION
@@ -165,7 +165,7 @@ BEGIN
 
   --reset inturrupt & condition
   DISABLE CONDITION[INRPT_LOGPOS]
-  scan_trigger_reset(SCAN_TRIGGER_TYPE,SCAN_TRIGGER_PIN)
+  scan_trigger_reset
 
   -- --reset pause flag used to pause motion
   -- SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)

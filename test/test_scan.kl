@@ -4,12 +4,21 @@ PROGRAM test_scan
 %UNINITVARS
 
 %include standard.m
+--port types
+%include kliotyps.kl
+
 
 %include kunit.klh
 
 %class tstscn('scan_part.klc','scan_part.klh','defaultscan.klt')
 
 BEGIN
+  --make simulated
+  SET_PORT_SIM(io_anin, SENSOR_PIN, 0, status)
 
   kunit_done
+
+  --unsimulate
+  CLR_PORT_SIM(io_anin, SENSOR_PIN, status)
+  
 END test_scan
