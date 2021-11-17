@@ -2,3 +2,5 @@
 robot.ini
 bin/
 build/
+viz/
+viz/*.py

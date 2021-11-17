@@ -119,6 +119,7 @@ ROUTINE log_pose
     --if out of range will return uninitialized
     IF NOT UNINIT(last_range) THEN
       rngPos = POS(0,0,last_range,orient.x,orient.y,orient.z, (ZEROPOS(1).config_data))
+      --INV(UF):UF:Pos:INV(TF):TF:rngPos
       p = p:rngPos
     ENDIF
 

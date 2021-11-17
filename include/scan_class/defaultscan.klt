@@ -1,6 +1,6 @@
 %define SCANPART_CONFIG_FILENAME defaultscan.klt
 
-%define SCAN_FILENAME hs1_scan.csv
+%define SCAN_FILENAME tofscan.csv
 
 %define SCAN_FINISH_FLAG_NAME path_done
 
