@@ -7,16 +7,49 @@ PROGRAM test_scan
 --port types
 %include kliotyps.kl
 
+%include errors.klt
+%include paths.c.klt
 
+%ifdef USE_G6_CONFIG
+%include config_select.klt
+%else
+%include defaultscan.klt
+%endif
+
+--simulate sensor readings
+%define RUN_SCAN_TEST_BAND1
+%define BAND1_SIM 'FR:\tof_rand.csv'
+
+VAR
+%define COORD_SYS PTH_CYLINDER
+%define COORD_AXIS 3
+  orient : VECTOR
+  status : INTEGER
+
+%include errors.klh
+%include multitask.klh
+%from systemlib.klh %import VEC
 %include kunit.klh
 
-%class tstscn('scan_part.klc','scan_part.klh','defaultscan.klt')
+define_scan_object(SCANNING_OBJECT_NAME,SCANNING_CNFG)
 
 BEGIN
   --make simulated
   SET_PORT_SIM(io_anin, SENSOR_PIN, 0, status)
 
-  kunit_done
+  --initialize scanner
+  orient = VEC(0,0,0)
+  `SCANNING_OBJECT_NAME`__init(COORD_SYS, COORD_AXIS, orient)
+  --enable scanner
+  IF NOT task__thread('SCANNING_OBJECT_NAME') THEN
+      karelError(RUN_TASK_FAILED, 'scan task did not start',ER_ABORT)
+  ENDIF
+
+  SET_PORT_VAL(io_anin, SENSOR_PIN, TRUNC(0), status)
+  DELAY 5000
+
+  --end scan
+  SET_PORT_VAL(io_anin, SCN_END_FLG, 1, status)
 
   --unsimulate
   CLR_PORT_SIM(io_anin, SENSOR_PIN, status)
