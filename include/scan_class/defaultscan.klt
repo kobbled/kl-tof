@@ -1,17 +1,36 @@
-%define SCANPART_CONFIG_FILENAME defaultscan.klt
+%define SCANNING_OBJECT_NAME tstscn
+%define SCANNING_CNFG defaultscan.klt
 
 %define SCAN_FILENAME tofscan.csv
-
-%define SCAN_FINISH_FLAG_NAME path_done
-
+-- Flag to pause scan path while writing to to file
+%define SCN_PATH_FLG 113
+--DO for TA trigger for recording positional info
 %define SCAN_TRIGGER_PIN 50
+-- Flag to end scanning
+%define SCN_END_FLG 118
+
+--need frames for calculating lpos
+%define USER_FRAME_NO 2
+%define TOOL_FRAME_NO 3
 
 %define RBT_GRP 1
+
+%define USE_STATIC FALSE
 
 %mode push
 %mode string QQQ "`" "`" "\\"
 %define scan_trigger_condition `DOUT[SCAN_TRIGGER_PIN]`
 %define scan_trigger_reset `DOUT[SCAN_TRIGGER_PIN] = OFF`
+%mode pop
+
+--pose struct
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define path_type_define(type_name,object_name) `TYPE
+  -- 85 bytes
+  type_name FROM object_name = STRUCTURE
+		robot : XYZWPR
+	ENDSTRUCTURE`
 %mode pop
 
 --tof sensor
@@ -21,6 +40,10 @@
 
 %mode push
 %mode string QQQ "`" "`" "\\"
-%define define_scansensor(object_name,cnfg_file) `%class object_name('tof_sensor.klc','tof_sensor.klh','cnfg_file')`
+
+%define sensor_object_define(object_name,cnfg_file) `%class object_name('tof_sensor.klc','tof_sensor.klh','cnfg_file')`
+
+%define define_scan_object(object_name,cnfg_file) `%class object_name('scan_part.klc','scan_part.klh','cnfg_file')`
+
 %mode pop
 ------------------
