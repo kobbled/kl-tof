@@ -28,12 +28,16 @@ ROUTINE read_measurement_
     --contiguous digital range, can just use
     --analog value and max const as out of range
     --value is the same above or below.
-    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] > this.max) THEN
-      SET_UNINIT_R('class_name', 'last_range')
-    ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) > this.m*this.max) THEN
+%ifeq SENS_MODE MODE_0_5V
+    IF (AIN[this.pin] > this.max) THEN
       SET_UNINIT_R('class_name', 'last_range')
     ENDIF
+%endif
+%ifeq SENS_MODE MODE_5_5V
+    IF (ABS(last_range) > this.m*this.max) THEN
+      SET_UNINIT_R('class_name', 'last_range')
     ENDIF
+%endif
   END read_measurement_
 
 ROUTINE read_range_
@@ -53,12 +57,16 @@ ROUTINE read_range_
 
     -- warning.. might not be a solution?????
     --if laser out of range uninitialize whole sample
-    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] > this.max) THEN
-      this.measuremnts = uninit_r
-    ELSE IF (this.mode=MODE_5_5V) AND (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
+%ifeq SENS_MODE MODE_0_5V
+    IF (AIN[this.pin] > this.max) THEN
       this.measuremnts = uninit_r
     ENDIF
+%endif
+%ifeq SENS_MODE MODE_5_5V
+    IF (ABS(this.measuremnts[this.last_index]) > this.m*this.max) THEN
+      this.measuremnts = uninit_r
     ENDIF
+%endif
 
     this.last_index = this.last_index + 1
 
@@ -74,18 +82,25 @@ ROUTINE read_signal_
   BEGIN
 
 %ifeq SIGNAL_TYPE VIRTUAL
-    IF (this.mode=MODE_0_5V) AND (AIN[this.pin] <= this.max) THEN
-      is_signal = TRUE
-    ELSE IF (this.mode=MODE_5_5V) AND (ABS(last_range) <= this.m*this.max) THEN
+%ifeq SENS_MODE MODE_0_5V
+    IF (AIN[this.pin] <= this.max) THEN
       is_signal = TRUE
     ELSE
       is_signal = FALSE
     ENDIF
+%endif
+%ifeq SENS_MODE MODE_5_5V
+    IF (ABS(last_range) <= this.m*this.max) THEN
+      is_signal = TRUE
+    ELSE
+      is_signal = FALSE
     ENDIF
+%endif
     --set DOUT pin
     SIGNAL_TYPE_STR = is_signal
 %else
 %ifeq SIGNAL_TYPE PHYSICAL
+    --set DIN pin
     is_signal = SIGNAL_TYPE_STR
 %else
 %error 'SIGNAL_TYPE must be specified as VIRTUAL or PHYSICAL'
@@ -106,6 +121,7 @@ ROUTINE read_zero_
     ZERO_TYPE_STR = zeroed
 %else
 %ifeq ZERO_TYPE PHYSICAL
+    --set DIN pin
     zeroed = ZERO_TYPE_STR
 %else
 %error 'ZERO_TYPE must be specified as VIRTUAL or PHYSICAL'
@@ -116,20 +132,19 @@ ROUTINE read_zero_
 --routine to convert analog signal to real value
 ROUTINE calib_
   BEGIN
-    SELECT this.mode OF
-      CASE(MODE_4_20MA):
-        karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
-      CASE(MODE_0_5V):
-        RETURN(this.m * AIN[this.pin] + this.b)
-      CASE(MODE_5_5V):
-        IF AIN[this.pin] > this.max THEN
-          RETURN(this.m * AIN[this.pin] + this.b)
-        ELSE
-          RETURN(this.m * AIN[this.pin])
-        ENDIF
-      ELSE:
-        karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
-    ENDSELECT
+%ifeq SENS_MODE MODE_4_20MA
+    karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
+%endif
+%ifeq SENS_MODE MODE_0_5V
+    RETURN(this.m * AIN[this.pin] + this.b)
+%endif
+%ifeq SENS_MODE MODE_5_5V
+    IF AIN[this.pin] > this.max THEN
+      RETURN(this.m * AIN[this.pin] + this.b)
+    ELSE
+      RETURN(this.m * AIN[this.pin])
+    ENDIF
+%endif
 
   END calib_
 
@@ -199,20 +214,19 @@ ROUTINE set_sim_analog
       karelError(PORT_NOT_SIMULATED, 'analog port for tof must be simulated.', ER_ABORT)
     ENDIF
     --calculate digital analog signal
-    SELECT this.mode OF
-      CASE(MODE_4_20MA):
-        karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
-      CASE(MODE_0_5V):
-        analog_val = TRUNC((meas_mm - this.b)/this.m)
-      CASE(MODE_5_5V):
-        IF (meas_mm < 0) THEN
-          analog_val = TRUNC((meas_mm - this.b)/this.m)
-        ELSE
-          analog_val = TRUNC(meas_mm/this.m)
-        ENDIF
-      ELSE:
-        karelError(INVALID_TYPE_CODE, 'tof sensor mode is not properly selected.', ER_ABORT)
-    ENDSELECT
+%ifeq SENS_MODE MODE_4_20MA
+    karelError(INVALID_TYPE_CODE, '4-20 ma has not been implemented yet.', ER_ABORT)
+%endif
+%ifeq SENS_MODE MODE_0_5V
+    analog_val = TRUNC((meas_mm - this.b)/this.m)
+%endif
+%ifeq SENS_MODE MODE_5_5V
+    IF (meas_mm < 0) THEN
+      analog_val = TRUNC((meas_mm - this.b)/this.m)
+    ELSE
+      analog_val = TRUNC(meas_mm/this.m)
+    ENDIF
+%endif
     --set analog signal
     SET_PORT_VAL(io_anin, (this.pin), analog_val, status)
   END set_sim_analog 
@@ -281,12 +295,14 @@ ROUTINE watch_change
 --task
 BEGIN
   WHILE(TRUE) DO
-    IF (this.meas_type = 1) THEN
-      read_measurement_
-    ENDIF
-    IF (this.meas_type = 2) THEN
-      read_range_
-    ENDIF
+    SELECT this.meas_type OF
+      CASE(1):
+        read_measurement_
+      CASE(2):
+        read_range_
+      ELSE:
+        karelError(INVALID_TYPE_CODE, 'measurement type for sensor not properly set.', ER_ABORT)
+    ENDSELECT
 
     --determine digital signal
     read_signal_
