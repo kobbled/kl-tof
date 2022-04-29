@@ -10,9 +10,6 @@
     "include/scan_class",
     "include/sensor_configs"
   ],
-  "source" : [
-    "tp/scn_new.kl"
-  ],
   "tests" : [
     "test/test_tof.kl",
     "test/tst_sim_tof.kl",
@@ -32,17 +29,9 @@
     "multitask",
     "systemlib",
     "Strings",
-    "ktransw-macros",
-    "cell1_config",
-    "cell2_config"
+    "ktransw-macros"
   ],
   "tests-depends" : [
     "KUnit"
-  ],
-  "macros" : [
-    "USE_G6_CONFIG",
-    "DEBUG_BUILD=FALSE",
-    "WORKCELL=1",
-    "WORKSTATION=2"
   ]
 }
