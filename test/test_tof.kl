@@ -61,7 +61,7 @@ BEGIN
   feed_delay = SIM_TIME
 
   --create tof object
-  tof1__constructor
+  tof1__new
   --set custom sample time
   tof1__set_sample_time(feed_delay)
   --set to average ranging mode
@@ -106,7 +106,7 @@ BEGIN
 
   --abort ranging
   tof_task = task__abort('tof1')
-  tof1__destructor
+  tof1__delete
 
   --abort sim task
   sim_task = task__abort('tst_sim_tof')

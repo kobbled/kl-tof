@@ -7,12 +7,12 @@
 header_if -- ifndef class
 header_def -- define class
 
+declare_member(class_name,new,class_name,new)
+ROUTINE new FROM class_name
 declare_member(class_name,init,class_name,init)
 ROUTINE init(crd_sys : INTEGER; crd_axs : INTEGER ; orientation : VECTOR) FROM class_name
 declare_member(class_name,set_orientation,class_name,stor)
 ROUTINE set_orientation(orientation : VECTOR) FROM class_name
 declare_member(class_name,set_coord_sys,class_name,stcs)
 ROUTINE set_coord_sys(crd_sys : INTEGER; crd_axs : INTEGER) FROM class_name
-declare_member(class_name,set_scan_finished,class_name,stsf)
-ROUTINE set_scan_finished FROM class_name
 %endif --end header

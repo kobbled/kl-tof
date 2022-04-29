@@ -1,0 +1,10 @@
+PROGRAM scn_new
+%NOBUSYLAMP
+%NOLOCKGROUP
+
+%defeval class_name scnprt
+%include scan_part.klh
+
+BEGIN
+	new
+END scn_new

@@ -37,6 +37,7 @@ VAR
 %from display.klh %import clear, show
 %from strings.klh %import i_to_s, r_to_s, pose_to_s
 %from registers.klh %import get_string
+%from systemlib.klh %import VEC
 %include pose.klh
 %include multitask.klh
 %include csv.klh
@@ -47,10 +48,8 @@ define_scansensor(SENSOR_CLASS,SENSOR_TEMPLATE)
 -- csv pipe object
 %class csvpip('csvclass.klc','csvclass.klh')
 
-%ifdef DEBUG_BUILD
 -- user display log
 %class usrdis('dispclass.klc','dispclass.klh')
-%endif
 
 %defeval class_name BASE_CLASSNAME
 
@@ -63,6 +62,13 @@ ROUTINE init
     orient = orientation
   END init
 
+ROUTINE new
+  BEGIN
+    coord_sys.system = PTH_CYLINDER
+    coord_sys.z_axis = 3
+    orient = VEC(0,0,0)
+  END new
+
 ROUTINE set_orientation
   BEGIN
     orient = orientation
@@ -73,11 +79,6 @@ ROUTINE set_coord_sys
     coord_sys.system = crd_sys
     coord_sys.z_axis = crd_axs
   END set_coord_sys
-
-ROUTINE set_scan_finished
-  BEGIN
-    scan_finish = TRUE
-  END set_scan_finished
 
 ROUTINE log_pose
   VAR
@@ -129,10 +130,8 @@ ROUTINE log_pose
     --being read from pipe
     PEND_SEMA(pipe_sema, -1, time_out)
 
-%ifdef DEBUG_BUILD
     usrdis__print(DEBUG,'sensor val[' + i_to_s(counter) + ']: ' + r_to_s(last_range))
     usrdis__print(DEBUG,'pose[' + i_to_s(counter) + ']: ' + pose_to_s(p, ','))
-%endif
 
     --write vector to pipe
     csvpip__write_row_vector(coord)
@@ -158,19 +157,24 @@ BEGIN
   --clear display
   display__clear
 
-%ifdef DEBUG_BUILD
   --construct debug log
   --(log_filename, show_date, show_debug, show_info)
-  usrdis__constructor('', FALSE, FALSE, TRUE)
+%ifdef DEBUG_BUILD
+  usrdis__new('', FALSE, TRUE, TRUE)
+%else
+  usrdis__new('', FALSE, FALSE, TRUE)
 %endif
 
   --reset inturrupt & condition
   DISABLE CONDITION[INRPT_LOGPOS]
   scan_trigger_reset
 
-  -- --reset pause flag used to pause motion
-  -- SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)
-  -- CHK_STAT(status)
+  --reset pause flag used to pause motion
+  SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)
+  CHK_STAT(status)
+  --reset scan end flag
+  SET_PORT_VAL(io_flag, SCN_END_FLG, 0, status)
+  CHK_STAT(status)
 
   --resetn point count
   counter = 0
@@ -196,7 +200,7 @@ BEGIN
   POST_SEMA (pipe_sema)
 
   --initialize sensor
-  `SENSOR_CLASS`__constructor
+  `SENSOR_CLASS`__new
 
   --start ranging task of sensor
   tof_task = task__thread('SENSOR_CLASS')
@@ -212,7 +216,7 @@ BEGIN
 
   --while loop for writing pipe into csv file
   --once a certain number of lines have been accrued
-  scan_finish = FALSE
+  scan_finish = 0
   REPEAT
     --when max number of lines is reached, dump pipe into csv file
     IF csvpip__get_lines >= csvpip__get_maxlines THEN
@@ -225,11 +229,10 @@ BEGIN
         -- SET_PORT_VAL(io_flag, SCN_PATH_FLG, 1, status)
         -- CHK_STAT(status)
         
-%ifdef DEBUG_BUILD
         usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter))
         --log last read point for log
         last_read = counter
-%endif
+
         --write pipe to csv file
         csvpip__write_to_file(csv_name, csv_file, FALSE)
         --clear pipe
@@ -248,20 +251,16 @@ BEGIN
   --must be top level progam to be considered a task
   UNTIL(scan_finish)
 
-%ifdef DEBUG_BUILD
   usrdis__print(INFO,'scan path has finished.')
-%endif
 
   --cleanup sensor
   DISABLE CONDITION[INRPT_LOGPOS]
   tof_task = task__abort('SENSOR_CLASS')
-  `SENSOR_CLASS`__destructor
+  `SENSOR_CLASS`__delete
 
   -- write any remainder data in pipe to csv
-%ifdef DEBUG_BUILD
   usrdis__print(INFO,'clearing remaining pipe to file.')
   usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter) + 'to file')
-%endif
 
   csvpip__write_to_file(csv_name, csv_file, FALSE)
   csv__close(csv_name, csv_file)
@@ -270,13 +269,11 @@ BEGIN
 
   csvpip__destructor
 
-%ifdef DEBUG_BUILD
   usrdis__print(INFO,'scanning has finished. Scan file is written to ' + csv_name)
   --destruct debug log
-  usrdis__destructor
+  usrdis__delete
   --force show user panel
   display__show
-%endif
 
 END class_name
 

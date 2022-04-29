@@ -134,7 +134,7 @@ ROUTINE calib_
   END calib_
 
 --initialization
-ROUTINE constructor 
+ROUTINE new 
   BEGIN
     --set pin
     this.pin = SENSOR_PIN
@@ -158,15 +158,15 @@ ROUTINE constructor
     is_signal = FALSE
     prev_signal = FALSE
     seen = TRUE
-  END constructor
+  END new
 
-ROUTINE destructor
+ROUTINE delete
   BEGIN
     --uninitialize measurement array
     this.measuremnts = uninit_r
     --clear pin number
     this.pin = 0
-  END destructor
+  END delete
 
 --set sample time
 ROUTINE set_sample_time
