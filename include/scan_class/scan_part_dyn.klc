@@ -1,0 +1,308 @@
+PROGRAM class_name
+%NOBUSYLAMP
+%COMMENT = 'scan part'
+%NOLOCKGROUP
+
+-- SCN_END_FLG is a flag used to end the scanning process
+-- use this flag in motion program to stop the scanning process
+
+%ifeq DEBUG_BUILD FALSE
+%undef DEBUG_BUILD
+%endif
+
+%include namespace.m
+
+--program members
+%include kliotyps.kl
+%include systemvars.klt
+%include errors.klt
+%include display.c.klt
+%include csv.klt
+%include pose.const.klt
+%include paths.klt
+
+--define robot
+%ifdef type_pathclass
+type_pathclass(PATH_DATA_TYPE, class_name)
+%endif
+
+%include scan_part.klt
+
+%define BASE_CLASSNAME class_name
+
+VAR
+  pipe_sema : INTEGER -- semaphore for passing control of writing to pip or csv file
+  last_range  FROM SENSOR_CLASS : REAL --averaged sensor readings
+  csv_name : STRING[20]
+  csv_file : FILE
+  tof_task : BOOLEAN
+  time_out : BOOLEAN
+  counter : INTEGER
+  last_read : INTEGER
+  scan_finish : INTEGER -- Flag for ending csv writing during scanning
+  status  : INTEGER
+  idod_   : INTEGER
+
+  coord_sys : t_COORD_SYS
+  rbt_pos 	:	PATH_DATA_TYPE
+
+  coord : VECTOR
+  orient : VECTOR
+
+%from errors.klh %import karelError, CHK_STAT
+%from display.klh %import clear, show
+%from strings.klh %import i_to_s, r_to_s, pose_to_s
+%from registers.klh %import get_string
+%from systemlib.klh %import VEC
+%include pose.klh
+%include multitask.klh
+%include csv.klh
+
+-- Robot pose implementation
+impl_pathclass_members(BASE_CLASSNAME)
+
+--sensor object
+sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
+
+-- csv pipe object
+%class csvpip('csvclass.klc','csvclass.klh')
+
+-- user display log
+%class usrdis('dispclass.klc','dispclass.klh')
+
+%defeval class_name BASE_CLASSNAME
+
+%include scan_part.klh
+
+ROUTINE init
+  BEGIN
+    coord_sys.system = crd_sys
+    coord_sys.z_axis = crd_axs
+    orient = orientation
+  END init
+
+ROUTINE new
+  BEGIN
+    coord_sys.system = PTH_CYLINDER
+    coord_sys.z_axis = Z_AXES
+    orient = VEC(0,0,0)
+  END new
+
+ROUTINE set_orientation
+  BEGIN
+    orient = orientation
+  END set_orientation
+
+ROUTINE set_coord_sys
+  BEGIN
+    coord_sys.system = crd_sys
+    coord_sys.z_axis = crd_axs
+  END set_coord_sys
+
+ROUTINE log_pose
+  VAR
+    p : XYZWPR
+    rngPos : XYZWPR
+    origin : XYZWPR
+  BEGIN
+
+    --block interrupt until completion
+    --put after ranging in case point is out of range and being skipped
+    DISABLE CONDITION[INRPT_LOGPOS]
+
+    IF NOT task__is_task_running('SENSOR_CLASS') THEN
+      karelError(RUN_TASK_FAILED, 'SENSOR_CLASS failed', ER_WARN)
+      tof_task = task__thread('SENSOR_CLASS')
+      DELAY CYCLE_TIME
+    ENDIF
+
+    --increment counter
+    counter = counter + 1
+
+    --get current robot position
+    rbt_pos = set_lpos
+
+    --set origin
+    origin = (ZEROPOS(1))
+    --convert coord sys
+    SELECT coord_sys.system OF
+      CASE(PTH_CARTESAN):
+        p = get_cart(rbt_pos)
+      CASE(PTH_CYLINDER):
+        -- (x,y,z) -> (theta,z,r)
+        -- ?? Should change cylindrical mapping
+        p = pose__cartesian_to_cylindrical(origin, (p), (coord_sys.z_axis))
+        --remap theat between 0-360 for plotting and processing
+        IF p.x < 0 THEN
+          p.x = 360 + p.x
+        ENDIF
+      CASE(PTH_POLAR):
+        karelError(INVALID_TYPE_CODE, 'polar conversion for scan has not been added yet', ER_ABORT)
+    ENDSELECT
+
+    --update radius with height offset
+    --if out of range will return uninitialized
+    IF NOT UNINIT(last_range) THEN
+      rngPos = POS(0,0,last_range,0,0,0, (ZEROPOS(1).config_data))
+      --INV(UF):UF:Pos:INV(TF):TF:rngPos
+      p = p:rngPos
+    ENDIF
+
+    coord.x = p.x ; coord.y = p.y ; coord.z = p.z ; 
+
+    --block writing to pipe in case data is
+    --being read from pipe
+    PEND_SEMA(pipe_sema, -1, time_out)
+
+    usrdis__print(DEBUG,'sensor val[' + i_to_s(counter) + ']: ' + r_to_s(last_range))
+    usrdis__print(DEBUG,'pose[' + i_to_s(counter) + ']: ' + pose_to_s(p, ','))
+
+    --write vector to pipe
+    csvpip__write_row_vector(coord)
+
+    POST_SEMA (pipe_sema)
+
+    -- unblock interrupt
+    scan_trigger_reset
+    ENABLE CONDITION[INRPT_LOGPOS]
+    
+  END log_pose
+
+
+-- **********************
+
+BEGIN
+  CONDITION[INRPT_LOGPOS]:
+    WHEN scan_trigger_condition DO --TRIGGER to SNAP the laser value
+      -- log lpos to pipe
+      log_pose
+  ENDCONDITION
+
+  --clear display
+  display__clear
+
+  --construct debug log
+  --(log_filename, show_date, show_debug, show_info)
+%ifdef DEBUG_BUILD
+  usrdis__new('', FALSE, TRUE, TRUE)
+%else
+  usrdis__new('', FALSE, FALSE, TRUE)
+%endif
+
+  --set frame for getting lpos in correct frame
+  pose__set_userframe(USER_FRAME_NO, RBT_GRP)
+  pose__set_toolframe(TOOL_FRAME_NO, RBT_GRP)
+
+  --reset inturrupt & condition
+  DISABLE CONDITION[INRPT_LOGPOS]
+  scan_trigger_reset
+
+  --reset pause flag used to pause motion
+  SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)
+  CHK_STAT(status)
+  --reset scan end flag
+  SET_PORT_VAL(io_flag, SCN_END_FLG, 0, status)
+  CHK_STAT(status)
+
+  --resetn point count
+  counter = 0
+  last_read = 0
+
+  csv_name = 'FR:SCAN_FILENAME'
+  --create csv file
+  csv__create(csv_name, csv_file)
+  --clear file if exists
+  csv__clear(csv_name, csv_file)
+
+  --initialize csv pipe
+  --insert header 'theta,z,r'
+  csvpip__constructor(PIPE_FILE, ',', CYLINDRICAL_HEADER)
+  csvpip__set_maxlines(MAX_PIPE)
+  --write feildnames
+  csvpip__write_fieldnames
+
+  --start semaphore for writing to csv pipe
+  pipe_sema = CSV_SEMA
+  CLEAR_SEMA (pipe_sema)
+  --make writing immediately available
+  POST_SEMA (pipe_sema)
+
+  --initialize sensor
+  `SENSOR_CLASS`__new
+
+  --start ranging task of sensor
+  tof_task = task__thread('SENSOR_CLASS')
+  IF NOT tof_task THEN
+      karelError(RUN_TASK_FAILED, 'tof sensor did not start',ER_ABORT)
+  ENDIF
+
+  --open csv file to write to
+  csv__open(csv_name, 'AP', csv_file)
+
+  --enable logging interrupt
+  ENABLE CONDITION[INRPT_LOGPOS]
+
+  --while loop for writing pipe into csv file
+  --once a certain number of lines have been accrued
+  scan_finish = 0
+  REPEAT
+    --when max number of lines is reached, dump pipe into csv file
+    IF csvpip__get_lines >= csvpip__get_maxlines THEN
+      --wait on semaphore indefinitely as it might take minutes to
+      --fill pipe past max lines
+      PEND_SEMA(pipe_sema, MAX_WAIT, time_out)
+      
+      IF NOT time_out THEN
+        --pause motion while writing
+        SET_PORT_VAL(io_flag, SCN_PATH_FLG, 1, status)
+        CHK_STAT(status)
+        
+        usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter))
+        --log last read point for log
+        last_read = counter
+
+        --write pipe to csv file
+        csvpip__write_to_file(csv_name, csv_file, FALSE)
+        --clear pipe
+        csvpip__clear
+
+        --resume motion
+        SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)
+        CHK_STAT(status)
+      ENDIF
+
+      POST_SEMA(pipe_sema)
+    ENDIF
+    DELAY CYCLE_TIME
+
+    --check that running template has completed
+    GET_PORT_VAL(io_flag, SCN_END_FLG, scan_finish, status)
+  --must be top level progam to be considered a task
+  UNTIL(scan_finish > 0)
+
+  usrdis__print(INFO,'scan path has finished.')
+
+  --cleanup sensor
+  DISABLE CONDITION[INRPT_LOGPOS]
+  tof_task = task__abort('SENSOR_CLASS')
+  `SENSOR_CLASS`__delete
+
+  -- write any remainder data in pipe to csv
+  usrdis__print(INFO,'clearing remaining pipe to file.')
+  usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter) + 'to file')
+
+  csvpip__write_to_file(csv_name, csv_file, FALSE)
+  csv__close(csv_name, csv_file)
+
+  csvpip__clear
+
+  csvpip__destructor
+
+  usrdis__print(INFO,'scanning has finished. Scan file is written to ' + csv_name)
+  --destruct debug log
+  usrdis__delete
+  --force show user panel
+  display__show
+
+END class_name
+

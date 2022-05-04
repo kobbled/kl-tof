@@ -6,10 +6,6 @@ PROGRAM class_name
 -- SCN_END_FLG is a flag used to end the scanning process
 -- use this flag in motion program to stop the scanning process
 
-%ifeq USE_STATIC FALSE
-%undef USE_STATIC
-%endif
-
 %ifeq DEBUG_BUILD FALSE
 %undef DEBUG_BUILD
 %endif
@@ -22,10 +18,13 @@ PROGRAM class_name
 %include errors.klt
 %include display.c.klt
 %include csv.klt
+%include pose.const.klt
 %include paths.klt
 
---define 
-path_type_define(t_node,scan_part)
+--define robot
+%ifdef type_pathclass
+type_pathclass(PATH_DATA_TYPE, class_name)
+%endif
 
 %include scan_part.klt
 
@@ -42,12 +41,13 @@ VAR
   last_read : INTEGER
   scan_finish : INTEGER -- Flag for ending csv writing during scanning
   status  : INTEGER
+  idod_   : INTEGER
 
   coord_sys : t_COORD_SYS
-  rbt_pos 	:	t_node
-%ifdef USE_STATIC
+  rbt_pos 	:	PATH_DATA_TYPE
+
   rotary : ARRAY[2] OF REAL
-%endif
+
   coord : VECTOR
   orient : VECTOR
 
@@ -59,6 +59,9 @@ VAR
 %include pose.klh
 %include multitask.klh
 %include csv.klh
+
+-- Robot pose implementation
+impl_pathclass_members(BASE_CLASSNAME)
 
 --sensor object
 sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
@@ -83,7 +86,7 @@ ROUTINE init
 ROUTINE new
   BEGIN
     coord_sys.system = PTH_CYLINDER
-    coord_sys.z_axis = 3
+    coord_sys.z_axis = Z_AXES
     orient = VEC(0,0,0)
   END new
 
@@ -104,50 +107,34 @@ ROUTINE log_pose
     rngPos : XYZWPR
     origin : XYZWPR
   BEGIN
-    IF NOT task__is_task_running('SENSOR_CLASS') THEN
-      karelError(RUN_TASK_FAILED, 'SENSOR_CLASS failed', ER_ABORT)
-    ENDIF
-
     --block interrupt until completion
     --put after ranging in case point is out of range and being skipped
     DISABLE CONDITION[INRPT_LOGPOS]
+
+    IF NOT task__is_task_running('SENSOR_CLASS') THEN
+      karelError(RUN_TASK_FAILED, 'SENSOR_CLASS failed', ER_WARN)
+      tof_task = task__thread('SENSOR_CLASS')
+      DELAY CYCLE_TIME
+    ENDIF
 
     --increment counter
     counter = counter + 1
 
     --get current robot position
-    rbt_pos.robot = pose__get_lpos(RBT_GRP)
-
-%ifdef USE_STATIC
--- #### STATIC FRAME
-    -- get turntable position
-%if ROT_GRP > 0
-      rbt_pos.rotary = pose__get_jpos(ROT_GRP)
-%endif
-
-    --get track position
-%if TRACK_GRP > 0
-      rbt_pos.track = pose__get_lpos(TRACK_GRP)
-%endif
-
--- ####
-%endif
+    rbt_pos = set_lpos
 
     --set origin
     origin = (ZEROPOS(1))
     --convert coord sys
     SELECT coord_sys.system OF
       CASE(PTH_CARTESAN):
-        p = rbt_pos.robot
+        p = get_cart(rbt_pos)
       CASE(PTH_CYLINDER):
-%ifdef USE_STATIC
--- #### STATIC FRAME
         --get position
-        p = rbt_pos.robot
+        p = get_cart(rbt_pos)
 
         -- Theta
-        CNV_JPOS_REL(rbt_pos.rotary, rotary, status)
-        p.x = rotary[ROTARY_JNT]
+        p.x = get_component(rbt_pos, ROT_GRP, ROTARY_JNT)
 
         IF p.x < 0 THEN
           p.x = 360 + p.x
@@ -156,24 +143,13 @@ ROUTINE log_pose
         --z-dist
 %if TRACK_GRP > 0
         --track
-        p.y = rbt_pos.robot.z - rbt_pos.track.y -- track in world frame
+        p.y = get_component(rbt_pos, RBT_GRP, 3) - get_component(rbt_pos, TRACK_GRP, TRACK_AXES) -- track in world frame
 %else
-        p.y = rbt_pos.robot.z
+        p.y = get_component(rbt_pos, RBT_GRP, 3)
 %endif
         -- radius
         -- ?? Should change cylindrical mapping
-        p.z = rbt_pos.robot.y
-%else
--- ## DYNAMIC FRAME
-        -- (theta,z,r) -> (x,y,z)
-        -- ?? Should change cylindrical mapping
-        p = pose__cartesian_to_cylindrical(origin, rbt_pos.robot, (coord_sys.z_axis))
-        --remap theat between 0-360 for plotting and processing
-        IF p.x < 0 THEN
-          p.x = 360 + p.x
-        ENDIF
--- ####
-%endif
+        p.z = get_component(rbt_pos, RBT_GRP, 2)
       CASE(PTH_POLAR):
         karelError(INVALID_TYPE_CODE, 'polar conversion for scan has not been added yet', ER_ABORT)
     ENDSELECT
@@ -181,17 +157,8 @@ ROUTINE log_pose
     --update radius with height offset
     --if out of range will return uninitialized
     IF NOT UNINIT(last_range) THEN
-%ifdef USE_STATIC
--- #### STATIC FRAME
       -- ?? Should change cylindrical mapping
       p.z = p.z + last_range
-%else
--- ## DYNAMIC FRAME
-      rngPos = POS(0,0,last_range,0,0,0, (ZEROPOS(1).config_data))
-      --INV(UF):UF:Pos:INV(TF):TF:rngPos
-      p = p:rngPos
--- ####
-%endif
     ENDIF
 
     coord.x = p.x ; coord.y = p.y ; coord.z = p.z ; 
@@ -236,11 +203,7 @@ BEGIN
 %endif
 
   --set frame for getting lpos in correct frame
-%ifdef USE_STATIC
-  pose__set_userframe(USER_STATIC_FRAME_NO, RBT_GRP)
-%else
   pose__set_userframe(USER_FRAME_NO, RBT_GRP)
-%endif
   pose__set_toolframe(TOOL_FRAME_NO, RBT_GRP)
 
   --reset inturrupt & condition
