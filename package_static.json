@@ -8,18 +8,12 @@
   "includes" : [
     "include",
     "include/scan_class",
-    "include/sensor_configs"
+    "include/sensor_configs",
+    "test/config/old"
   ],
   "source" : [
+    "test/config/old/staticscan.kl",
     "tp/scn_new.kl"
-  ],
-  "tests" : [
-    "test/test_tof.kl",
-    "test/tst_sim_tof.kl",
-    "test/tof_rand.csv",
-    "test/tof_sign.csv",
-    "test/tof_zero.csv",
-    "test/test_scan.kl"
   ],
   "depends" : [
     "errors",
@@ -33,16 +27,9 @@
     "systemlib",
     "Strings",
     "ktransw-macros",
-    "cell1_config",
-    "cell2_config"
-  ],
-  "tests-depends" : [
     "KUnit"
   ],
   "macros" : [
-    "USE_G6_CONFIG",
-    "DEBUG_BUILD=FALSE",
-    "WORKCELL=1",
-    "WORKSTATION=2"
+    "DEBUG_BUILD=FALSE"
   ]
 }

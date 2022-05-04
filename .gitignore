@@ -4,3 +4,5 @@ bin/
 build/
 viz/
 viz/*.py
+test/config/old/
+package.json
