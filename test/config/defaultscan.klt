@@ -1,0 +1,44 @@
+--name of the scan object
+%define SCANNING_OBJECT_NAME tstscn
+-- set name of the klt template to this
+-- This must be the same as the configuration file.
+%define SCANNING_CNFG defaultcell.klt
+
+-- Flag to pause scan path while writing to to file
+%define SCN_PATH_FLG 113
+--DO for TA trigger for recording positional info
+%define SCAN_TRIGGER_PIN 50
+-- Flag to end scanning
+%define SCN_END_FLG 114
+
+-- File to save scan to
+%define SCAN_FILENAME tofscan.csv
+
+
+--macros for interrupt trigger
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define scan_trigger_condition `DOUT[SCAN_TRIGGER_PIN]`
+%define scan_trigger_reset `DOUT[SCAN_TRIGGER_PIN] = OFF`
+%mode pop
+
+--tof sensor
+------------------
+%defeval SENSOR_CLASS tof1
+%define SENSOR_TEMPLATE sensor_calib_test_settings.klt
+
+--use for template header declaration
+%mode push
+%mode quote "$"
+%eval $%include SENSOR_TEMPLATE$
+%mode pop
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+
+%define sensor_object_define(object_name,cnfg_file) `%class object_name('tof_sensor.klc','tof_sensor.klh','cnfg_file')`
+
+%define define_scan_object(object_name,cnfg_file) `%class object_name('scan_part_dyn.klc','scan_part.klh','cnfg_file')`
+
+%mode pop
+------------------

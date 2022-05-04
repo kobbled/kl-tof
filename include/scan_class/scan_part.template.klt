@@ -1,7 +1,9 @@
+--name of the scan object
 %define SCANNING_OBJECT_NAME tstscn
+-- set name of the klt template to this
+-- This must be the same as the configuration file.
 %define SCANNING_CNFG defaultscan.klt
 
-%define SCAN_FILENAME tofscan.csv
 -- Flag to pause scan path while writing to to file
 %define SCN_PATH_FLG 113
 --DO for TA trigger for recording positional info
@@ -9,28 +11,14 @@
 -- Flag to end scanning
 %define SCN_END_FLG 118
 
---need frames for calculating lpos
-%define USER_FRAME_NO 2
-%define TOOL_FRAME_NO 3
+-- File to save scan to
+%define SCAN_FILENAME tofscan.csv
 
-%define RBT_GRP 1
-
-%define USE_STATIC FALSE
-
+--macros for interrupt trigger
 %mode push
 %mode string QQQ "`" "`" "\\"
 %define scan_trigger_condition `DOUT[SCAN_TRIGGER_PIN]`
 %define scan_trigger_reset `DOUT[SCAN_TRIGGER_PIN] = OFF`
-%mode pop
-
---pose struct
-%mode push
-%mode string QQQ "`" "`" "\\"
-%define path_type_define(type_name,object_name) `TYPE
-  -- 85 bytes
-  type_name FROM object_name = STRUCTURE
-		robot : XYZWPR
-	ENDSTRUCTURE`
 %mode pop
 
 --tof sensor

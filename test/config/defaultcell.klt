@@ -1,0 +1,18 @@
+--need frames for calculating lpos
+%define USER_FRAME_NO 2
+%define TOOL_FRAME_NO 3
+
+%define RBT_GRP 1
+%define ROT_GRP 2
+-- total number of joints in turntable group
+%define ROT_AXES 1
+-- rotary axis of the turntable
+%define ROTARY_JNT 1
+-- track
+%define TRACK_GRP 0
+
+--import robot pose implentation
+%include base.paths.impl.klt
+
+--import scanning configuration
+%include defaultscan.klt
