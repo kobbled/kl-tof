@@ -90,6 +90,9 @@ ROUTINE read_signal_
     ENDIF
 %endif
 %ifeq SENS_MODE MODE_5_5V
+    IF UNINIT(last_range) THEN
+      read_measurement_
+    ENDIF 
     IF (ABS(last_range) <= this.m*this.max) THEN
       is_signal = TRUE
     ELSE
@@ -112,6 +115,9 @@ ROUTINE read_zero_
   BEGIN
 
 %ifeq ZERO_TYPE VIRTUAL
+    IF UNINIT(last_range) THEN
+      read_measurement_
+    ENDIF
     IF ABS(last_range) < ZERO_TOLERANCE THEN
       zeroed = TRUE
     ELSE

@@ -10,11 +10,7 @@ PROGRAM test_scan
 %include errors.klt
 %include paths.c.klt
 
-%ifdef USE_G6_CONFIG
-%include config_select.klt
-%else
-%include defaultscan.klt
-%endif
+%include defaultcell.klt
 
 --simulate sensor readings
 %define RUN_SCAN_TEST_BAND1
