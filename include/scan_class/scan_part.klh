@@ -15,4 +15,8 @@ declare_member(class_name,set_orientation,class_name,stor)
 ROUTINE set_orientation(orientation : VECTOR) FROM class_name
 declare_member(class_name,set_coord_sys,class_name,stcs)
 ROUTINE set_coord_sys(crd_sys : INTEGER; crd_axs : INTEGER) FROM class_name
+declare_member(class_name,set_scan_finished,class_name,stsf)
+-- scan finish trigger for karel programs
+-- for TP programs toggle SCN_END_FLG
+ROUTINE set_scan_finished FROM class_name
 %endif --end header

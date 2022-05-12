@@ -99,6 +99,12 @@ ROUTINE set_coord_sys
     coord_sys.z_axis = crd_axs
   END set_coord_sys
 
+ROUTINE set_scan_finished
+  BEGIN
+    --end scan
+    SET_PORT_VAL(io_anin, SCN_END_FLG, 1, status)
+  END set_scan_finished
+
 ROUTINE log_pose
   VAR
     p : XYZWPR
