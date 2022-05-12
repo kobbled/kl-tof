@@ -33,7 +33,7 @@
 --number of ranging samples to hold
 %define  MAX_SAMPLES 4
 -- sampling time of each measurement
-%define SAMPLE_MS 10
+%define SAMPLE_MS 30
 
  
 %endif -- IL300_t

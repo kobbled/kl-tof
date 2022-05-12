@@ -62,6 +62,7 @@ VAR
 %from systemlib.klh %import VEC
 %include pose.klh
 %include multitask.klh
+%from files.klh %import check_open
 %include csv.klh
 
 -- Robot pose implementation
@@ -122,7 +123,7 @@ ROUTINE log_pose
     DISABLE CONDITION[INRPT_LOGPOS]
 
     IF NOT task__is_task_running('SENSOR_CLASS') THEN
-      karelError(RUN_TASK_FAILED, 'SENSOR_CLASS failed', ER_WARN)
+      usrdis__print(WARN,'SENSOR_CLASS failed')
       tof_task = task__thread('SENSOR_CLASS')
       DELAY CYCLE_TIME
     ENDIF
@@ -151,7 +152,7 @@ ROUTINE log_pose
         ENDIF
 
         --z-dist
-%if TRACK_GRP > 0
+%ifdef TRACK_GRP
         --track
         p.y = get_component(rbt_pos, RBT_GRP, 3) - get_component(rbt_pos, TRACK_GRP, TRACK_AXES) -- track in world frame
 %else
@@ -252,6 +253,8 @@ BEGIN
 
   --initialize sensor
   `SENSOR_CLASS`__new
+  `SENSOR_CLASS`__set_measurement_type(2)
+  DELAY CYCLE_TIME
 
   --start ranging task of sensor
   tof_task = task__thread('SENSOR_CLASS')
@@ -273,7 +276,7 @@ BEGIN
     IF csvpip__get_lines >= csvpip__get_maxlines THEN
       --wait on semaphore indefinitely as it might take minutes to
       --fill pipe past max lines
-      PEND_SEMA(pipe_sema, MAX_WAIT, time_out)
+      PEND_SEMA(pipe_sema, MAX_DELAY, time_out)
       
       IF NOT time_out THEN
         --pause motion while writing
@@ -284,6 +287,18 @@ BEGIN
         --log last read point for log
         last_read = counter
 
+        --check that csv file is open
+        status = IO_STATUS(csv_file)
+        IF status <> 0 THEN
+          -- if file is not open try to reopen it
+          csv__close(csv_name, csv_file)
+          csv__open(csv_name, 'AP', csv_file)
+          DELAY CYCLE_TIME
+
+          -- make sure file is open or abort
+          files__check_open(csv_name, csv_file)
+        ENDIF
+
         --write pipe to csv file
         csvpip__write_to_file(csv_name, csv_file, FALSE)
         --clear pipe
@@ -292,6 +307,8 @@ BEGIN
         --resume motion
         SET_PORT_VAL(io_flag, SCN_PATH_FLG, 0, status)
         CHK_STAT(status)
+      ELSE
+        karelError(CANT_WRITE, 'class_name: csv could not be written to in time. Decrease speed.', ER_ABORT)
       ENDIF
 
       POST_SEMA(pipe_sema)

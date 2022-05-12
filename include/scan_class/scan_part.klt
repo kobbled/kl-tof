@@ -15,7 +15,7 @@ CONST
 --frequency to check if pipe needs to be cleared
 %define CYCLE_TIME 100
 --delay time if write operation hasn't completed in time
-%define MAX_DELAY 1000
+%define MAX_DELAY 5000
 --max pipe size is # of lines
 %define MAX_PIPE 200
 
