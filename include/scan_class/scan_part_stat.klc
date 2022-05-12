@@ -26,8 +26,8 @@ PROGRAM class_name
 %include paths.klt
 
 --define robot
-%ifdef type_pathclass
-type_pathclass(PATH_DATA_TYPE, class_name)
+%ifdef motion_type
+motion_type(MOTION_DATA_FILE)
 %endif
 
 %include scan_part.klt
@@ -48,7 +48,7 @@ VAR
   idod_   : INTEGER
 
   coord_sys : t_COORD_SYS
-  rbt_pos 	:	PATH_DATA_TYPE
+  rbt_pos 	:	MOTION_DATA_TYPE
 
   rotary : ARRAY[2] OF REAL
 
@@ -65,7 +65,7 @@ VAR
 %include csv.klh
 
 -- Robot pose implementation
-impl_pathclass_members(BASE_CLASSNAME)
+impl_motion_members(MOTION_DATA_FILE)
 
 --sensor object
 sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
