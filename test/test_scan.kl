@@ -8,7 +8,7 @@ PROGRAM test_scan
 %include kliotyps.kl
 
 %include errors.klt
-%include paths.c.klt
+%include pathlib.c.klt
 
 %include defaultcell.klt
 

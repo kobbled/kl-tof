@@ -21,7 +21,7 @@
     "display",
     "registers",
     "pose",
-    "paths",
+    "pathlib",
     "csv",
     "multitask",
     "systemlib",

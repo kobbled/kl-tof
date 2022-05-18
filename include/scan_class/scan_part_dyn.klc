@@ -19,7 +19,7 @@ PROGRAM class_name
 %include display.c.klt
 %include csv.klt
 %include pose.const.klt
-%include paths.klt
+%include pathlib.klt
 
 --define robot
 %ifdef motion_type
