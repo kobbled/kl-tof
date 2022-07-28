@@ -240,7 +240,7 @@ BEGIN
 
   --initialize csv pipe
   --insert header 'theta,z,r'
-  csvpip__constructor(PIPE_FILE, ',', CYLINDRICAL_HEADER)
+  csvpip__new(PIPE_FILE, ',', CYLINDRICAL_HEADER)
   csvpip__set_maxlines(MAX_PIPE)
   --write feildnames
   csvpip__write_fieldnames
@@ -273,7 +273,7 @@ BEGIN
   scan_finish = 0
   REPEAT
     --when max number of lines is reached, dump pipe into csv file
-    IF csvpip__get_lines >= csvpip__get_maxlines THEN
+    IF csvpip__get_lines_written >= csvpip__get_maxlines THEN
       --wait on semaphore indefinitely as it might take minutes to
       --fill pipe past max lines
       PEND_SEMA(pipe_sema, MAX_DELAY, time_out)
@@ -300,6 +300,7 @@ BEGIN
         ENDIF
 
         --write pipe to csv file
+        -- (name, file, handle open/close)
         csvpip__write_to_file(csv_name, csv_file, FALSE)
         --clear pipe
         csvpip__clear
@@ -331,12 +332,13 @@ BEGIN
   usrdis__print(INFO,'clearing remaining pipe to file.')
   usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter) + 'to file')
 
+  -- (name, file, handle open/close)
   csvpip__write_to_file(csv_name, csv_file, FALSE)
   csv__close(csv_name, csv_file)
 
   csvpip__clear
 
-  csvpip__destructor
+  csvpip__delete
 
   usrdis__print(INFO,'scanning has finished. Scan file is written to ' + csv_name)
   --destruct debug log
