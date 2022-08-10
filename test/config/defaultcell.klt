@@ -12,7 +12,7 @@
 %define TRACK_GRP 0
 
 --import robot pose implentation
-%include base.paths.impl.klt
+%include base.motion.impl.klt
 
 --import scanning configuration
 %include defaultscan.klt
