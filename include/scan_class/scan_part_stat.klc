@@ -187,7 +187,7 @@ ROUTINE log_pose
       p.z = p.z + last_range
     ENDIF
 
-    coord.x = p.x ; coord.y = p.y ; coord.z = p.z ; 
+    coord.x = p.x ; coord.y = p.z ; coord.z = p.y ; 
 
     --block writing to pipe in case data is
     --being read from pipe
