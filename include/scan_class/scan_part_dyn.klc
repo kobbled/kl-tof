@@ -10,16 +10,26 @@ PROGRAM class_name
 %undef DEBUG_BUILD
 %endif
 
+%ifeq DEBUG_PLOT_POINTS FALSE
+%undef DEBUG_PLOT_POINTS
+%endif
+
+%ifdef DEBUG_PLOT_POINTS
+%define PLOT_NAME 'RD:path_plot.DT'
+%endif
+
 %include namespace.m
 
 --program members
 %include kliotyps.kl
 %include systemvars.klt
+%include systemlib.datatypes.klt
 %include errors.klt
 %include display.c.klt
 %include csv.klt
 %include pose.const.klt
 %include pathlib.klt
+%include toolpath.structs.klt
 
 --define robot
 %ifdef motion_type
@@ -49,8 +59,12 @@ VAR
   coord : VECTOR
   orient : VECTOR
 
+-- reference to 'data' attribute in CSV_OBJECT_NAME
+%include csvclass.friends.klt
+csvclass_friends(csvpip)
+
 %from errors.klh %import karelError, CHK_STAT
-%from display.klh %import clear, show
+%include display.klh
 %from strings.klh %import i_to_s, r_to_s, pose_to_s
 %from registers.klh %import get_string
 %from systemlib.klh %import VEC
@@ -60,7 +74,7 @@ VAR
 %include csv.klh
 
 -- Robot pose implementation
-impl_motion_members(MOTION_DATA_FILE)
+impl_motion_head(MOTION_DATA_FILE)
 
 --sensor object
 sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
@@ -70,6 +84,11 @@ sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
 
 -- user display log
 %class usrdis('dispclass.klc','dispclass.klh')
+
+%ifdef DEBUG_PLOT_POINTS
+-- plot debug
+%class usrplt('dispclass.klc','dispclass.klh')
+%endif
 
 %defeval class_name BASE_CLASSNAME
 
@@ -134,11 +153,11 @@ ROUTINE log_pose
     --convert coord sys
     SELECT coord_sys.system OF
       CASE(PTH_CARTESAN):
-        p = get_cart(rbt_pos)
+        p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
       CASE(PTH_CYLINDER):
         -- (x,y,z) -> (theta,z,r)
         -- ?? Should change cylindrical mapping
-        p = pose__cartesian_to_cylindrical(origin, (p), (coord_sys.z_axis))
+        p = pose__cartesian_to_cylindrical(origin, (p), (coord_sys.z_axis), 0, FALSE)
         --remap theat between 0-360 for plotting and processing
         IF p.x < 0 THEN
           p.x = 360 + p.x
@@ -194,6 +213,12 @@ BEGIN
   usrdis__new('', FALSE, TRUE, TRUE)
 %else
   usrdis__new('', FALSE, FALSE, TRUE)
+%endif
+
+%ifdef DEBUG_PLOT_POINTS
+  -- PLOT_NAME
+  usrplt__new(PLOT_NAME, FALSE, TRUE, TRUE)
+  usrplt__clear_file
 %endif
 
   --set frame for getting lpos in correct frame
@@ -326,6 +351,11 @@ BEGIN
   usrdis__print(INFO,'scanning has finished. Scan file is written to ' + csv_name)
   --destruct debug log
   usrdis__delete
+
+%ifdef DEBUG_PLOT_POINTS
+  usrplt__delete
+%endif
+
   --force show user panel
   display__show
 

@@ -10,6 +10,9 @@
     "include/scan_class",
     "include/sensor_configs"
   ],
+  "tests-includes" : [
+    "test/config"
+  ],
   "tests" : [
     "test/test_tof.kl",
     "test/tst_sim_tof.kl",
