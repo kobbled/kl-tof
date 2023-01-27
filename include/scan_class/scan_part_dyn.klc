@@ -73,7 +73,7 @@ csvclass_friends(csvpip)
 %from files.klh %import check_open
 %include csv.klh
 
--- Robot pose implementation
+-- Robot pose implementation header
 impl_motion_head(MOTION_DATA_FILE)
 
 --sensor object
@@ -150,10 +150,12 @@ ROUTINE log_pose
 
     --set origin
     origin = (ZEROPOS(1))
+
+    --get position
+    p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
+
     --convert coord sys
     SELECT coord_sys.system OF
-      CASE(PTH_CARTESAN):
-        p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
       CASE(PTH_CYLINDER):
         -- (x,y,z) -> (theta,z,r)
         -- ?? Should change cylindrical mapping

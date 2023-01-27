@@ -75,7 +75,7 @@ VAR
 %from files.klh %import check_open
 %include csv.klh
 
--- Robot pose implementation
+-- Robot pose implementation header
 impl_motion_members(MOTION_DATA_FILE)
 
 --sensor object
@@ -149,16 +149,14 @@ ROUTINE log_pose
     --get current robot position
     rbt_pos = set_lpos
 
+    --get position
+    p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
+
     --set origin
     origin = (ZEROPOS(1))
     --convert coord sys
     SELECT coord_sys.system OF
-      CASE(PTH_CARTESAN):
-        p = get_cart(rbt_pos)
       CASE(PTH_CYLINDER):
-        --get position
-        p = get_cart(rbt_pos)
-
         -- Theta
         p.x = get_component(rbt_pos, ROT_GRP, ROTARY_JNT)
 
