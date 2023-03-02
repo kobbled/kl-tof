@@ -1,0 +1,35 @@
+{
+  "manver" : "1",
+  "project" : "tof-sensor",
+  "description" : "time of flight sensor object. Framework for managing tof, or laser distance sensor on a FANUC controller.",
+  "version" : "0.0.1",
+  "license" : "MIT",
+  "author" : "kobbled",
+  "includes" : [
+    "include",
+    "include/scan_class",
+    "include/sensor_configs",
+    "test/config/old"
+  ],
+  "source" : [
+    "test/config/old/staticscan.kl",
+    "tp/scn_new.kl"
+  ],
+  "depends" : [
+    "errors",
+    "math",
+    "display",
+    "registers",
+    "pose",
+    "pathlib",
+    "csv",
+    "multitask",
+    "systemlib",
+    "Strings",
+    "ktransw-macros",
+    "KUnit"
+  ],
+  "macros" : [
+    "DEBUG_BUILD=FALSE"
+  ]
+}
