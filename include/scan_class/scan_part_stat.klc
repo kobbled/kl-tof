@@ -76,7 +76,7 @@ VAR
 %include csv.klh
 
 -- Robot pose implementation header
-impl_motion_members(MOTION_DATA_FILE)
+impl_motion_head(MOTION_DATA_FILE)
 
 --sensor object
 sensor_object_define(SENSOR_CLASS,SENSOR_TEMPLATE)
