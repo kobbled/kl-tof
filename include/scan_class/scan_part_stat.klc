@@ -259,7 +259,7 @@ BEGIN
 
   --initialize csv pipe
   --insert header 'theta,z,r'
-  csvpip__new(PIPE_FILE, ',', CYLINDRICAL_HEADER)
+  csvpip__new(PIPE_FILE, ',', CYLINDRICAL_SCANNING_HEADER)
   csvpip__set_maxlines(MAX_PIPE)
   --write feildnames
   csvpip__write_fieldnames
