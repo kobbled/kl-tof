@@ -1,3 +1,6 @@
+-- cd pair for dynamic recording
+%define CD_PAIR 1
+
 --need frames for calculating lpos
 %define USER_FRAME_NO 2
 %define TOOL_FRAME_NO 3

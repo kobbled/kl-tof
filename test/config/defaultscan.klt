@@ -1,5 +1,5 @@
 --name of the scan object
-%define SCANNING_OBJECT_NAME tstscn
+%define SCANNING_OBJECT_NAME scnprt
 -- set name of the klt template to this
 -- This must be the same as the configuration file.
 %define SCANNING_CNFG defaultcell.klt
