@@ -1,6 +1,6 @@
 PROGRAM class_name
 %NOBUSYLAMP
-%COMMENT = 'scan part'
+%COMMENT = 'dynamic scan part'
 %NOLOCKGROUP
 
 -- SCN_END_FLG is a flag used to end the scanning process
@@ -65,13 +65,14 @@ csvclass_friends(csvpip)
 
 %from errors.klh %import karelError, CHK_STAT
 %include display.klh
-%from strings.klh %import i_to_s, r_to_s, pose_to_s
+%from strings.klh %import i_to_s, r_to_s, pose_to_s, vec_to_s
 %from registers.klh %import get_string
 %from systemlib.klh %import VEC
 %include pose.klh
 %include multitask.klh
 %from files.klh %import check_open
 %include csv.klh
+%from math.klh %import map_to_360
 
 -- Robot pose implementation header
 impl_motion_head(MOTION_DATA_FILE)
@@ -122,7 +123,7 @@ ROUTINE set_coord_sys
 ROUTINE set_scan_finished
   BEGIN
     --end scan
-    SET_PORT_VAL(io_anin, SCN_END_FLG, 1, status)
+    SET_PORT_VAL(io_flag, SCN_END_FLG, 1, status)
   END set_scan_finished
 
 ROUTINE log_pose
@@ -152,18 +153,20 @@ ROUTINE log_pose
     origin = (ZEROPOS(1))
 
     --get position
-    p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
+    -- p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
+    $UFRAME = $MNUFRAME[CD_PAIR,USER_FRAME_NO]
+    $UTOOL = $MNUTOOL[CD_PAIR,TOOL_FRAME_NO]
+    p = CURPOS(0, 0, RBT_GRP)
 
     --convert coord sys
     SELECT coord_sys.system OF
       CASE(PTH_CYLINDER):
         -- (x,y,z) -> (theta,z,r)
-        -- ?? Should change cylindrical mapping
         p = pose__cartesian_to_cylindrical(origin, (p), (coord_sys.z_axis), 0, FALSE)
-        --remap theat between 0-360 for plotting and processing
-        IF p.x < 0 THEN
-          p.x = 360 + p.x
-        ENDIF
+        
+        --remap theta between 0-360 for plotting and processing
+        p.x = math__map_to_360(p.x)
+        
       CASE(PTH_POLAR):
         karelError(INVALID_TYPE_CODE, 'polar conversion for scan has not been added yet', ER_ABORT)
     ENDSELECT
@@ -172,21 +175,20 @@ ROUTINE log_pose
     --if out of range will return uninitialized
     IF NOT UNINIT(last_range) THEN
       rngPos = POS(0,0,last_range,0,0,0, (ZEROPOS(1).config_data))
-      --INV(UF):UF:Pos:INV(TF):TF:rngPos
       p = p:rngPos
     ENDIF
 
-    coord.x = p.x ; coord.y = p.y ; coord.z = p.z ; 
+    -- (theta,r,z) -> (theta,z,r)
+    coord.x = p.x ; coord.y = p.z ; coord.z = p.y ; 
 
     --block writing to pipe in case data is
     --being read from pipe
     PEND_SEMA(pipe_sema, -1, time_out)
 
-    usrdis__print(DEBUG,'sensor val[' + i_to_s(counter) + ']: ' + r_to_s(last_range))
-    usrdis__print(DEBUG,'pose[' + i_to_s(counter) + ']: ' + pose_to_s(p, ','))
-
     --write vector to pipe
+    csvpip__open_append
     csvpip__write_row_vector(coord)
+    csvpip__close
 
     POST_SEMA (pipe_sema)
 
@@ -249,7 +251,7 @@ BEGIN
   csv__clear(csv_name, csv_file)
 
   --initialize csv pipe
-  --insert header 'theta,z,r'
+  --insert header 'theta,r,z'
   csvpip__new(PIPE_FILE, ',', CYLINDRICAL_SCANNING_HEADER)
   csvpip__set_maxlines(MAX_PIPE)
   --write feildnames
@@ -331,15 +333,12 @@ BEGIN
   --must be top level progam to be considered a task
   UNTIL(scan_finish > 0)
 
-  usrdis__print(INFO,'scan path has finished.')
-
   --cleanup sensor
   DISABLE CONDITION[INRPT_LOGPOS]
   tof_task = task__abort('SENSOR_CLASS')
   `SENSOR_CLASS`__delete
 
   -- write any remainder data in pipe to csv
-  usrdis__print(INFO,'clearing remaining pipe to file.')
   usrdis__print(INFO,'writing points ' + i_to_s(last_read) + '-' + i_to_s(counter) + 'to file')
 
   -- (name, file, handle open/close)
