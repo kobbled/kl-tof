@@ -9,10 +9,9 @@
     "include",
     "include/scan_class",
     "include/sensor_configs",
-    "test/config/old"
+    "test/config"
   ],
   "source" : [
-    "test/config/old/staticscan.kl",
     "tp/scn_new.kl"
   ],
   "depends" : [
@@ -22,6 +21,7 @@
     "registers",
     "pose",
     "pathlib",
+    "pathmotion",
     "csv",
     "multitask",
     "systemlib",

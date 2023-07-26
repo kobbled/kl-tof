@@ -1,6 +1,6 @@
 PROGRAM class_name
 %NOBUSYLAMP
-%COMMENT = 'scan part'
+%COMMENT = 'static scan part'
 %NOLOCKGROUP
 
 -- SCN_END_FLG is a flag used to end the scanning process
