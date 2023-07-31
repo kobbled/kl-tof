@@ -2,8 +2,8 @@ PROGRAM scn_new
 %NOBUSYLAMP
 %NOLOCKGROUP
 
-%defeval class_name scnprt
-%include scan_part.klh
+%include defaultcell.klt
+define_scan_object(SCANNING_OBJECT_NAME,SCANNING_CNFG)
 
 BEGIN
 	new

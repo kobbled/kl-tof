@@ -1,0 +1,18 @@
+--include default interface
+%include robot.motion.interface.klt
+
+-- ***********
+-- Define type
+-- ***********
+
+-- for a simple type
+%defeval MOTION_DATA_TYPE XYZWPR
+%defeval MOTION_DATA_JOINT_TYPE JOINTPOS
+%defeval MOTION_DATA_FILE gp1rbt
+-- %defeval MOTION_DATA_FILE rbtgp1
+
+-- ***********
+-- initialization  
+-- ***********
+
+%defeval DEFAULT_POSE new_pose(0,0,0,0,0,0, pose__set_config(DEFAULT_CONFIG))
