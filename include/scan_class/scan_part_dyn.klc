@@ -146,17 +146,16 @@ ROUTINE log_pose
     --increment counter
     counter = counter + 1
 
-    --get current robot position
-    rbt_pos = set_lpos
+    --set recording frames
+    pose__set_userframe(USER_FRAME_NO, RBT_GRP)
+    pose__set_toolframe(TOOL_FRAME_NO, RBT_GRP)
 
+    --get current robot position
+    rbt_pos = `MOTION_DATA_FILE`__set_lpos
+    p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
+    
     --set origin
     origin = (ZEROPOS(1))
-
-    --get position
-    -- p = `MOTION_DATA_FILE`__get_cart(rbt_pos)
-    $UFRAME = $MNUFRAME[CD_PAIR,USER_FRAME_NO]
-    $UTOOL = $MNUTOOL[CD_PAIR,TOOL_FRAME_NO]
-    p = CURPOS(0, 0, RBT_GRP)
 
     --convert coord sys
     SELECT coord_sys.system OF
