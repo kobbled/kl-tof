@@ -8,10 +8,10 @@
   -- analog mode
 %define SENS_MODE MODE_0_5V
   --regression parameters
-%define SENS_SLOPE 0.0116
-%define SENS_INTER -5.028
+%define SENS_SLOPE 0.01
+%define SENS_INTER -5.0042
 -- max analog
-%define SENS_MAX 880
+%define SENS_MAX 1039
   --total range
 %define TOTAL_RANGE 10
   --acceptable distance to search with sensor
